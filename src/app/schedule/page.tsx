@@ -212,8 +212,11 @@ export default function SchedulePage() {
           secondaryColor={carnival.branding?.secondaryColor}
         />
 
-        <NotificationOptIn announcements={visibleAnnouncements} />
-        <InstallPrompt />
+        <NotificationOptIn
+          announcements={visibleAnnouncements}
+          primaryColor={carnival.branding?.primaryColor}
+        />
+        <InstallPrompt primaryColor={carnival.branding?.primaryColor} />
 
         {isParent && (
           <section className="rounded-xl border border-slate-200 bg-white p-3 dark:border-slate-700 dark:bg-slate-900">
@@ -223,7 +226,11 @@ export default function SchedulePage() {
               </h3>
               <Link
                 href="/onboarding/parent?mode=addChild"
-                className="rounded-lg bg-emerald-600 px-3 py-1 text-sm font-medium text-white hover:bg-emerald-700"
+                className="rounded-lg px-3 py-1 text-sm font-medium text-white"
+                style={{
+                  background:
+                    carnival.branding?.secondaryColor ?? "#059669",
+                }}
               >
                 + Add child
               </Link>

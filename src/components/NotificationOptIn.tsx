@@ -34,8 +34,10 @@ function readPermission(): Permission {
 
 export function NotificationOptIn({
   announcements,
+  primaryColor,
 }: {
   announcements: Announcement[];
+  primaryColor?: string;
 }) {
   const [permission, setPermission] = useState<Permission>("default");
   const [dismissed, setDismissed] = useState(false);
@@ -114,7 +116,8 @@ export function NotificationOptIn({
       <div className="flex flex-col gap-1">
         <button
           onClick={enable}
-          className="rounded-lg bg-indigo-600 px-3 py-1.5 text-xs font-semibold text-white hover:bg-indigo-700"
+          className="rounded-lg px-3 py-1.5 text-xs font-semibold text-white"
+          style={{ background: primaryColor ?? "#4f46e5" }}
         >
           Allow
         </button>

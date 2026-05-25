@@ -95,19 +95,30 @@ export default function AnnouncementsPage() {
       </header>
 
       <div className="flex gap-2 overflow-x-auto">
-        {(["all", "urgent", "reminder", "notice"] as const).map((f) => (
-          <button
-            key={f}
-            onClick={() => setFilter(f)}
-            className={`whitespace-nowrap rounded-full px-3 py-1 text-xs font-medium ${
-              filter === f
-                ? "bg-indigo-600 text-white"
-                : "bg-slate-100 text-slate-600 dark:bg-slate-800 dark:text-slate-300"
-            }`}
-          >
-            {f === "all" ? "All" : SEVERITY_LABELS[f]}
-          </button>
-        ))}
+        {(["all", "urgent", "reminder", "notice"] as const).map((f) => {
+          const active = filter === f;
+          return (
+            <button
+              key={f}
+              onClick={() => setFilter(f)}
+              className={`whitespace-nowrap rounded-full px-3 py-1 text-xs font-medium ${
+                active
+                  ? "text-white"
+                  : "bg-slate-100 text-slate-600 dark:bg-slate-800 dark:text-slate-300"
+              }`}
+              style={
+                active
+                  ? {
+                      background:
+                        carnival?.branding?.primaryColor ?? "#4f46e5",
+                    }
+                  : undefined
+              }
+            >
+              {f === "all" ? "All" : SEVERITY_LABELS[f]}
+            </button>
+          );
+        })}
       </div>
 
       <ul className="space-y-2">

@@ -25,7 +25,7 @@ function isIOS() {
   return /iPad|iPhone|iPod/.test(ua) && !("MSStream" in window);
 }
 
-export function InstallPrompt() {
+export function InstallPrompt({ primaryColor }: { primaryColor?: string } = {}) {
   const [dismissed, setDismissed] = useState(true);
   const [ios, setIos] = useState(false);
   const [deferred, setDeferred] =
@@ -88,7 +88,8 @@ export function InstallPrompt() {
         {!ios && deferred && (
           <button
             onClick={install}
-            className="rounded-lg bg-indigo-600 px-3 py-1.5 text-xs font-semibold text-white hover:bg-indigo-700"
+            className="rounded-lg px-3 py-1.5 text-xs font-semibold text-white"
+            style={{ background: primaryColor ?? "#4f46e5" }}
           >
             Install
           </button>
