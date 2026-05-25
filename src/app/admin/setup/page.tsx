@@ -12,6 +12,7 @@ import {
 } from "@/lib/types";
 import { resizeImageToDataUrl } from "@/lib/image";
 import { SetupQuickstart } from "@/components/SetupQuickstart";
+import { validateAgeGroupRanges } from "@/lib/age";
 
 function uid() {
   return Math.random().toString(36).slice(2, 10);
@@ -290,6 +291,7 @@ export default function AdminSetupPage() {
             </>
           )}
         />
+        <AgeGroupValidation ageGroups={draft.ageGroups} />
       </Section>
 
       <Section title="Categories">
@@ -351,6 +353,42 @@ export default function AdminSetupPage() {
         </button>
       </div>
     </div>
+  );
+}
+
+function AgeGroupValidation({ ageGroups }: { ageGroups: AgeGroup[] }) {
+  const issues = validateAgeGroupRanges(ageGroups);
+  if (issues.length === 0) {
+    const ready = ageGroups.filter(
+      (g) =>
+        g.birthYearFrom !== undefined && g.birthYearTo !== undefined,
+    ).length;
+    if (ready === 0) return null;
+    return (
+      <p className="text-xs text-emerald-700 dark:text-emerald-400">
+        ✓ {ready} of {ageGroups.length} group{ageGroups.length === 1 ? "" : "s"}{" "}
+        ready for date-of-birth sign-in. No overlaps or gaps detected.
+      </p>
+    );
+  }
+  return (
+    <ul className="space-y-1 text-xs">
+      {issues.map((issue, i) => (
+        <li
+          key={i}
+          className={`rounded-md border px-2 py-1 ${
+            issue.severity === "error"
+              ? "border-red-300 bg-red-50 text-red-900 dark:border-red-900/60 dark:bg-red-950/40 dark:text-red-200"
+              : "border-amber-300 bg-amber-50 text-amber-900 dark:border-amber-900/60 dark:bg-amber-950/40 dark:text-amber-200"
+          }`}
+        >
+          <span className="mr-1 font-semibold uppercase">
+            {issue.severity === "error" ? "Error" : "Check"}
+          </span>
+          {issue.message}
+        </li>
+      ))}
+    </ul>
   );
 }
 
