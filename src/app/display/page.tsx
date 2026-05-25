@@ -60,9 +60,8 @@ export default function DisplayPage() {
   const secondary = carnival.branding?.secondaryColor;
   const logo = carnival.branding?.logoDataUrl;
   const maxPoints = Math.max(...sortedHouses.map((h) => h.points), 1);
-  const inProgressBg = secondary
-    ? `linear-gradient(135deg, ${secondary}, ${primary ?? secondary})`
-    : "linear-gradient(135deg, #10b981, #0d9488)";
+  const inProgressBg = "#059669";
+  const inProgressBorder = secondary ?? primary ?? "rgba(255,255,255,0.4)";
 
   return (
     <main className="min-h-screen bg-slate-950 text-white">
@@ -78,11 +77,10 @@ export default function DisplayPage() {
               />
             ) : (
               <div
-                className="h-20 w-20 rounded-lg"
+                className="h-20 w-20 rounded-lg border-4"
                 style={{
-                  background: primary
-                    ? `linear-gradient(135deg, ${primary}, ${secondary ?? primary})`
-                    : "linear-gradient(135deg, #4f46e5, #7c3aed)",
+                  background: primary ?? "#4f46e5",
+                  borderColor: secondary ?? "#7c3aed",
                 }}
               />
             )}
@@ -130,8 +128,11 @@ export default function DisplayPage() {
               {inProgress.map((e) => (
                 <li
                   key={e.id}
-                  className="rounded-2xl p-6 text-white shadow-lg"
-                  style={{ background: inProgressBg }}
+                  className="rounded-2xl border-4 p-6 text-white shadow-lg"
+                  style={{
+                    background: inProgressBg,
+                    borderColor: inProgressBorder,
+                  }}
                 >
                   <p className="text-3xl font-bold">{e.name}</p>
                   <p className="mt-1 text-lg opacity-90">{e.location}</p>

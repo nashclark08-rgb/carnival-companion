@@ -12,6 +12,9 @@ type Props = {
 };
 
 const IN_PROGRESS_WINDOW_MS = 30 * 60 * 1000;
+const FALLBACK_PRIMARY = "#4f46e5";
+const FALLBACK_SECONDARY = "#7c3aed";
+const IN_PROGRESS_FILL = "#059669";
 
 export function CountdownPin({
   event,
@@ -41,20 +44,18 @@ export function CountdownPin({
   const label = who ? `${who} — next event` : "Your next event";
   const inProgressLabel = who ? `${who} — happening now` : "Happening now";
 
-  const fallbackUpcoming = "linear-gradient(135deg, #4f46e5, #7c3aed)";
-  const fallbackInProgress = "linear-gradient(135deg, #10b981, #0d9488)";
-  const gradient = inProgress
-    ? secondaryColor
-      ? `linear-gradient(135deg, ${secondaryColor}, ${primaryColor ?? secondaryColor})`
-      : fallbackInProgress
-    : primaryColor
-      ? `linear-gradient(135deg, ${primaryColor}, ${secondaryColor ?? primaryColor})`
-      : fallbackUpcoming;
+  const fill = inProgress
+    ? IN_PROGRESS_FILL
+    : primaryColor ?? FALLBACK_PRIMARY;
+  const border = secondaryColor ?? FALLBACK_SECONDARY;
 
   return (
     <div
-      className="rounded-2xl p-6 text-white shadow-lg"
-      style={{ background: gradient }}
+      className="rounded-2xl border-4 p-6 text-white shadow-lg"
+      style={{
+        background: fill,
+        borderColor: inProgress ? "rgba(255,255,255,0.4)" : border,
+      }}
     >
       <p className="text-sm font-medium uppercase tracking-wide opacity-80">
         {inProgress ? inProgressLabel : label}
