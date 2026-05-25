@@ -1,11 +1,15 @@
 "use client";
 
-import { useState } from "react";
+import { useEffect, useMemo, useState } from "react";
 import { useRouter } from "next/navigation";
 import { useCarnival } from "@/lib/db";
 import { addChild, saveProfile } from "@/lib/attendee";
 import { DEFAULT_CARNIVAL_ID } from "@/lib/firebase";
 import { Role } from "@/lib/types";
+import {
+  anyAgeGroupHasBirthYear,
+  findAgeGroupForBirthDate,
+} from "@/lib/age";
 
 type Props = {
   role: Role;
@@ -19,6 +23,26 @@ export function OnboardingForm({ role, mode = "new" }: Props) {
   const [ageGroupId, setAgeGroupId] = useState("");
   const [categoryId, setCategoryId] = useState("");
   const [name, setName] = useState("");
+  const [dob, setDob] = useState("");
+  const [overrideAgeGroup, setOverrideAgeGroup] = useState(false);
+
+  const useDob = useMemo(
+    () => (carnival ? anyAgeGroupHasBirthYear(carnival.ageGroups) : false),
+    [carnival],
+  );
+
+  const matchedAgeGroup = useMemo(() => {
+    if (!carnival || !dob) return undefined;
+    return findAgeGroupForBirthDate(carnival.ageGroups, dob);
+  }, [carnival, dob]);
+
+  useEffect(() => {
+    if (!useDob) return;
+    if (matchedAgeGroup) {
+      setAgeGroupId(matchedAgeGroup.id);
+      setOverrideAgeGroup(false);
+    }
+  }, [matchedAgeGroup, useDob]);
 
   if (loading) {
     return <p className="text-center text-slate-500">Loading carnival…</p>;
@@ -41,6 +65,11 @@ export function OnboardingForm({ role, mode = "new" }: Props) {
     : isParent
       ? "Who are you following?"
       : "Tell us about yourself";
+
+  const dobLabel = isParent ? "Child's date of birth" : "Your date of birth";
+  const todayIso = new Date().toISOString().slice(0, 10);
+  const dobUnmatched = useDob && dob && !matchedAgeGroup;
+  const needsManualPicker = !useDob || dobUnmatched || overrideAgeGroup;
 
   function submit(e: React.FormEvent) {
     e.preventDefault();
@@ -102,21 +131,54 @@ export function OnboardingForm({ role, mode = "new" }: Props) {
         </select>
       </Field>
 
-      <Field label="Age group">
-        <select
-          required
-          value={ageGroupId}
-          onChange={(e) => setAgeGroupId(e.target.value)}
-          className="input"
-        >
-          <option value="">Select…</option>
-          {carnival.ageGroups.map((g) => (
-            <option key={g.id} value={g.id}>
-              {g.label}
-            </option>
-          ))}
-        </select>
-      </Field>
+      {useDob && (
+        <Field label={dobLabel}>
+          <input
+            type="date"
+            required
+            max={todayIso}
+            value={dob}
+            onChange={(e) => setDob(e.target.value)}
+            className="input"
+          />
+          {dob && matchedAgeGroup && !overrideAgeGroup && (
+            <p className="mt-1 text-xs text-emerald-700 dark:text-emerald-400">
+              Age group: <strong>{matchedAgeGroup.label}</strong>.{" "}
+              <button
+                type="button"
+                onClick={() => setOverrideAgeGroup(true)}
+                className="underline"
+              >
+                Not right?
+              </button>
+            </p>
+          )}
+          {dobUnmatched && (
+            <p className="mt-1 text-xs text-amber-700 dark:text-amber-400">
+              Couldn&apos;t match your birthday to an age group. Pick one
+              below.
+            </p>
+          )}
+        </Field>
+      )}
+
+      {needsManualPicker && (
+        <Field label="Age group">
+          <select
+            required
+            value={ageGroupId}
+            onChange={(e) => setAgeGroupId(e.target.value)}
+            className="input"
+          >
+            <option value="">Select…</option>
+            {carnival.ageGroups.map((g) => (
+              <option key={g.id} value={g.id}>
+                {g.label}
+              </option>
+            ))}
+          </select>
+        </Field>
+      )}
 
       <Field label="Category">
         <select

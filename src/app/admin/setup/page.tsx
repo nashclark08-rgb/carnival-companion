@@ -240,17 +240,54 @@ export default function AdminSetupPage() {
       </Section>
 
       <Section title="Age groups">
+        <p className="text-sm text-slate-500">
+          Optionally set the birth-year range for each group. When set,
+          students can enter their date of birth at sign-in and the app puts
+          them in the right group automatically.
+        </p>
         <ListEditor<AgeGroup>
           items={draft.ageGroups}
           onChange={(ageGroups) => setDraft({ ...draft, ageGroups })}
           newItem={() => ({ id: uid(), label: "" })}
           render={(item, set) => (
-            <input
-              className="input flex-1"
-              placeholder="e.g. Under 13"
-              value={item.label}
-              onChange={(e) => set({ ...item, label: e.target.value })}
-            />
+            <>
+              <input
+                className="input flex-1"
+                placeholder="e.g. Under 13"
+                value={item.label}
+                onChange={(e) => set({ ...item, label: e.target.value })}
+              />
+              <input
+                type="number"
+                inputMode="numeric"
+                className="input w-24"
+                placeholder="Year from"
+                value={item.birthYearFrom ?? ""}
+                onChange={(e) =>
+                  set({
+                    ...item,
+                    birthYearFrom: e.target.value
+                      ? parseInt(e.target.value, 10)
+                      : undefined,
+                  })
+                }
+              />
+              <input
+                type="number"
+                inputMode="numeric"
+                className="input w-24"
+                placeholder="Year to"
+                value={item.birthYearTo ?? ""}
+                onChange={(e) =>
+                  set({
+                    ...item,
+                    birthYearTo: e.target.value
+                      ? parseInt(e.target.value, 10)
+                      : undefined,
+                  })
+                }
+              />
+            </>
           )}
         />
       </Section>

@@ -10,6 +10,8 @@ export type House = {
 export type AgeGroup = {
   id: string;
   label: string;
+  birthYearFrom?: number;
+  birthYearTo?: number;
 };
 
 export type Category = {
