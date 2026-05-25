@@ -1,6 +1,7 @@
 import type { Metadata, Viewport } from "next";
 import { Geist, Geist_Mono } from "next/font/google";
 import "./globals.css";
+import { fetchCarnivalForManifest } from "@/lib/server-carnival";
 
 const geistSans = Geist({
   variable: "--font-geist-sans",
@@ -12,23 +13,33 @@ const geistMono = Geist_Mono({
   subsets: ["latin"],
 });
 
-export const metadata: Metadata = {
-  title: "Carnival Companion",
-  description: "Always know where you need to be, and when.",
-  manifest: "/manifest.webmanifest",
-  appleWebApp: {
-    capable: true,
-    statusBarStyle: "black-translucent",
-    title: "Carnival",
-  },
-};
+export async function generateMetadata(): Promise<Metadata> {
+  const carnival = await fetchCarnivalForManifest();
+  const title = carnival?.name?.trim() || "Carnival Companion";
+  const shortTitle =
+    carnival?.schoolName?.trim() ||
+    carnival?.name?.trim() ||
+    "Carnival";
+  return {
+    title,
+    description: "Always know where you need to be, and when.",
+    appleWebApp: {
+      capable: true,
+      statusBarStyle: "black-translucent",
+      title: shortTitle.slice(0, 30),
+    },
+  };
+}
 
-export const viewport: Viewport = {
-  themeColor: "#0f172a",
-  width: "device-width",
-  initialScale: 1,
-  maximumScale: 1,
-};
+export async function generateViewport(): Promise<Viewport> {
+  const carnival = await fetchCarnivalForManifest();
+  return {
+    themeColor: carnival?.branding?.primaryColor ?? "#0f172a",
+    width: "device-width",
+    initialScale: 1,
+    maximumScale: 1,
+  };
+}
 
 export default function RootLayout({
   children,
