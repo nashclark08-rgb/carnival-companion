@@ -5,6 +5,7 @@ import { useState } from "react";
 import { useCarnival, useEvents, useAnnouncements } from "@/lib/db";
 import { DEFAULT_CARNIVAL_ID } from "@/lib/firebase";
 import { seedDemoCarnival } from "@/lib/seed";
+import { ReadinessChecklist } from "@/components/ReadinessChecklist";
 
 export default function AdminDashboardPage() {
   const { carnival, loading } = useCarnival(DEFAULT_CARNIVAL_ID);
@@ -64,6 +65,10 @@ export default function AdminDashboardPage() {
             </p>
           </button>
         </div>
+      )}
+
+      {carnival && (
+        <ReadinessChecklist carnival={carnival} events={events} />
       )}
 
       {carnival && (
