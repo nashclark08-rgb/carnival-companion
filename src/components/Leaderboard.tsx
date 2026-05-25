@@ -1,8 +1,14 @@
 "use client";
 
 import { House } from "@/lib/types";
+import { formatAEST, formatRelative } from "@/lib/time";
 
-export function Leaderboard({ houses }: { houses: House[] }) {
+type Props = {
+  houses: House[];
+  updatedAt?: number;
+};
+
+export function Leaderboard({ houses, updatedAt }: Props) {
   if (houses.length === 0) {
     return (
       <div className="rounded-xl border border-slate-200 bg-white p-4 text-sm text-slate-500 dark:border-slate-700 dark:bg-slate-900">
@@ -15,9 +21,19 @@ export function Leaderboard({ houses }: { houses: House[] }) {
 
   return (
     <div className="rounded-xl border border-slate-200 bg-white p-4 dark:border-slate-700 dark:bg-slate-900">
-      <h3 className="mb-3 text-sm font-semibold uppercase tracking-wide text-slate-500">
-        House points
-      </h3>
+      <div className="mb-3 flex items-baseline justify-between gap-2">
+        <h3 className="text-sm font-semibold uppercase tracking-wide text-slate-500">
+          House points
+        </h3>
+        {updatedAt && (
+          <span
+            className="text-xs text-slate-500"
+            title={`Updated ${formatAEST(updatedAt)} (AEST)`}
+          >
+            Updated {formatRelative(updatedAt)} · {formatAEST(updatedAt)} AEST
+          </span>
+        )}
+      </div>
       <ul className="space-y-2">
         {sorted.map((h, i) => {
           const pct = Math.max((h.points / max) * 100, 4);

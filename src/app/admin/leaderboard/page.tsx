@@ -5,6 +5,7 @@ import { updateHousePoints, useCarnival } from "@/lib/db";
 import { DEFAULT_CARNIVAL_ID } from "@/lib/firebase";
 import { House } from "@/lib/types";
 import { Leaderboard } from "@/components/Leaderboard";
+import { formatAEST } from "@/lib/time";
 
 export default function AdminLeaderboardPage() {
   const { carnival } = useCarnival(DEFAULT_CARNIVAL_ID);
@@ -91,7 +92,11 @@ export default function AdminLeaderboardPage() {
 
       <div className="flex items-center justify-between">
         <span className="text-sm text-slate-500">
-          {savedAt ? `Saved ${new Date(savedAt).toLocaleTimeString()}` : ""}
+          {savedAt
+            ? `Saved ${formatAEST(savedAt)} AEST`
+            : carnival.pointsUpdatedAt
+              ? `Last saved ${formatAEST(carnival.pointsUpdatedAt)} AEST`
+              : ""}
         </span>
         <button
           onClick={save}
@@ -106,7 +111,7 @@ export default function AdminLeaderboardPage() {
         <h2 className="mb-2 text-sm font-semibold uppercase tracking-wide text-slate-500">
           Preview
         </h2>
-        <Leaderboard houses={houses} />
+        <Leaderboard houses={houses} updatedAt={carnival.pointsUpdatedAt} />
       </section>
     </div>
   );

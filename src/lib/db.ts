@@ -104,7 +104,10 @@ export async function updateHousePoints(
   carnivalId: string,
   houses: House[],
 ) {
-  await updateDoc(carnivalRef(carnivalId), { houses });
+  await updateDoc(carnivalRef(carnivalId), {
+    houses,
+    pointsUpdatedAt: Date.now(),
+  });
 }
 
 export async function upsertEvent(
@@ -124,12 +127,35 @@ export async function sendAnnouncement(
   severity: Severity,
   message: string,
   target: AnnouncementTarget = { kind: "all" },
+  expiresAt?: number,
 ) {
   await addDoc(announcementsRef(carnivalId), {
     severity,
     message,
     target,
     createdAt: Date.now(),
+    expiresAt,
     createdAtServer: serverTimestamp(),
   });
+}
+
+export async function deleteAnnouncement(
+  carnivalId: string,
+  announcementId: string,
+) {
+  await deleteDoc(doc(announcementsRef(carnivalId), announcementId));
+}
+
+export async function clearExpiredAnnouncements(
+  carnivalId: string,
+  beforeMs: number = Date.now(),
+) {
+  const { getDocs } = await import("firebase/firestore");
+  const snap = await getDocs(announcementsRef(carnivalId));
+  const stale = snap.docs.filter((d) => {
+    const data = d.data() as Announcement;
+    return data.expiresAt !== undefined && data.expiresAt < beforeMs;
+  });
+  await Promise.all(stale.map((d) => deleteDoc(d.ref)));
+  return stale.length;
 }

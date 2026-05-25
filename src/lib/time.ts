@@ -27,3 +27,26 @@ export function formatDateTimeLocal(epochMs: number): string {
 export function parseDateTimeLocal(value: string): number {
   return new Date(value).getTime();
 }
+
+export function formatAEST(epochMs: number): string {
+  return new Date(epochMs).toLocaleString("en-AU", {
+    timeZone: "Australia/Sydney",
+    hour: "2-digit",
+    minute: "2-digit",
+    day: "numeric",
+    month: "short",
+    hour12: false,
+  });
+}
+
+export function formatRelative(epochMs: number, now: number = Date.now()): string {
+  const diff = now - epochMs;
+  const absSec = Math.floor(Math.abs(diff) / 1000);
+  if (absSec < 60) return diff >= 0 ? "just now" : "in a moment";
+  const absMin = Math.floor(absSec / 60);
+  if (absMin < 60) return diff >= 0 ? `${absMin}m ago` : `in ${absMin}m`;
+  const absH = Math.floor(absMin / 60);
+  if (absH < 24) return diff >= 0 ? `${absH}h ago` : `in ${absH}h`;
+  const absD = Math.floor(absH / 24);
+  return diff >= 0 ? `${absD}d ago` : `in ${absD}d`;
+}

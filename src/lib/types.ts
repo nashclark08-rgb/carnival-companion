@@ -43,6 +43,7 @@ export type Carnival = {
   categories: Category[];
   sessions: Session[];
   branding?: Branding;
+  pointsUpdatedAt?: number;
 };
 
 export type EventType = "track" | "field";
@@ -78,6 +79,7 @@ export type Announcement = {
   severity: Severity;
   message: string;
   createdAt: number;
+  expiresAt?: number;
   target?: AnnouncementTarget;
 };
 

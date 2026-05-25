@@ -58,6 +58,8 @@ export default function AnnouncementsPage() {
     });
   }, [announcements, profile]);
 
+  const now = Date.now();
+
   const filtered = useMemo(
     () => (filter === "all" ? visible : visible.filter((a) => a.severity === filter)),
     [visible, filter],
@@ -114,27 +116,39 @@ export default function AnnouncementsPage() {
             No announcements{filter !== "all" ? ` at ${SEVERITY_LABELS[filter]} level` : ""}.
           </li>
         )}
-        {filtered.map((a) => (
-          <li
-            key={a.id}
-            className="rounded-xl border border-slate-200 bg-white p-3 dark:border-slate-700 dark:bg-slate-900"
-          >
-            <div className="flex flex-wrap items-center gap-2">
-              <span
-                className={`rounded px-2 py-0.5 text-xs uppercase ${SEVERITY_STYLES[a.severity]}`}
-              >
-                {SEVERITY_LABELS[a.severity]}
-              </span>
-              <span className="rounded bg-slate-100 px-2 py-0.5 text-xs text-slate-600 dark:bg-slate-800 dark:text-slate-300">
-                {describeTarget(a.target)}
-              </span>
-              <span className="text-xs text-slate-500">
-                {new Date(a.createdAt).toLocaleString()}
-              </span>
-            </div>
-            <p className="mt-1">{a.message}</p>
-          </li>
-        ))}
+        {filtered.map((a) => {
+          const expired = a.expiresAt !== undefined && a.expiresAt < now;
+          return (
+            <li
+              key={a.id}
+              className={`rounded-xl border bg-white p-3 dark:bg-slate-900 ${
+                expired
+                  ? "border-slate-200 opacity-60 dark:border-slate-800"
+                  : "border-slate-200 dark:border-slate-700"
+              }`}
+            >
+              <div className="flex flex-wrap items-center gap-2">
+                <span
+                  className={`rounded px-2 py-0.5 text-xs uppercase ${SEVERITY_STYLES[a.severity]}`}
+                >
+                  {SEVERITY_LABELS[a.severity]}
+                </span>
+                <span className="rounded bg-slate-100 px-2 py-0.5 text-xs text-slate-600 dark:bg-slate-800 dark:text-slate-300">
+                  {describeTarget(a.target)}
+                </span>
+                <span className="text-xs text-slate-500">
+                  {new Date(a.createdAt).toLocaleString()}
+                </span>
+                {expired && (
+                  <span className="rounded bg-slate-200 px-2 py-0.5 text-xs text-slate-700 dark:bg-slate-700 dark:text-slate-200">
+                    Expired
+                  </span>
+                )}
+              </div>
+              <p className="mt-1">{a.message}</p>
+            </li>
+          );
+        })}
       </ul>
     </main>
   );

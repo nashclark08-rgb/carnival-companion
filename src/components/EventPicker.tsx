@@ -59,10 +59,27 @@ export function EventPicker({
               ? !sessions.some((sx) => sx.id === e.sessionId)
               : e.sessionId === s.id,
           )
-          .sort((a, b) => a.scheduledTime - b.scheduledTime),
+          .sort((a, b) => {
+            if (a.scheduledTime !== b.scheduledTime) {
+              return a.scheduledTime - b.scheduledTime;
+            }
+            const nameCmp = a.name.localeCompare(b.name);
+            if (nameCmp !== 0) return nameCmp;
+            const aAg =
+              carnival.ageGroups.find((g) => g.id === a.ageGroupId)?.label ?? "";
+            const bAg =
+              carnival.ageGroups.find((g) => g.id === b.ageGroupId)?.label ?? "";
+            const agCmp = aAg.localeCompare(bAg);
+            if (agCmp !== 0) return agCmp;
+            const aCat =
+              carnival.categories.find((c) => c.id === a.categoryId)?.label ?? "";
+            const bCat =
+              carnival.categories.find((c) => c.id === b.categoryId)?.label ?? "";
+            return aCat.localeCompare(bCat);
+          }),
       }))
       .filter((g) => g.events.length > 0);
-  }, [filtered, carnival.sessions]);
+  }, [filtered, carnival.sessions, carnival.ageGroups, carnival.categories]);
 
   function toggle(id: string) {
     setSelected((cur) => {

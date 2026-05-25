@@ -42,7 +42,7 @@ export default function SchedulePage() {
   }, [router]);
 
   useEffect(() => {
-    const id = setInterval(() => setNow(Date.now()), 15000);
+    const id = setInterval(() => setNow(Date.now()), 5000);
     return () => clearInterval(id);
   }, []);
 
@@ -92,6 +92,7 @@ export default function SchedulePage() {
   const visibleAnnouncements = useMemo(() => {
     if (!profile) return announcements;
     return announcements.filter((a) => {
+      if (a.expiresAt !== undefined && a.expiresAt < now) return false;
       const target = a.target;
       if (!target || target.kind === "all") return true;
       if (target.kind === "house") {
@@ -108,7 +109,7 @@ export default function SchedulePage() {
       }
       return true;
     });
-  }, [announcements, profile]);
+  }, [announcements, profile, now]);
 
   const nextEvent = useMemo(
     () =>
@@ -263,7 +264,10 @@ export default function SchedulePage() {
           </div>
         )}
 
-        <Leaderboard houses={carnival.houses} />
+        <Leaderboard
+          houses={carnival.houses}
+          updatedAt={carnival.pointsUpdatedAt}
+        />
 
         <section>
           <div className="mb-2 flex items-center justify-between">
