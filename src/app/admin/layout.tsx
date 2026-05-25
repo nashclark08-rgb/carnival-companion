@@ -12,6 +12,7 @@ const NAV = [
   { href: "/admin/import", label: "Import" },
   { href: "/admin/leaderboard", label: "Leaderboard" },
   { href: "/admin/announcements", label: "Announcements" },
+  { href: "/admin/preview", label: "Preview" },
   { href: "/admin/qr", label: "QR code" },
 ];
 

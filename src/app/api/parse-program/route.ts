@@ -74,41 +74,59 @@ export async function POST(req: NextRequest) {
 
     const context: ParseContext = JSON.parse(contextJson);
 
-    const buffer = Buffer.from(await file.arrayBuffer());
-    const base64 = buffer.toString("base64");
     const mediaType = file.type;
+    const fileName = file.name.toLowerCase();
     const isPdf = mediaType === "application/pdf";
     const isImage = mediaType.startsWith("image/");
+    const isText =
+      mediaType.startsWith("text/") ||
+      mediaType === "application/csv" ||
+      fileName.endsWith(".csv") ||
+      fileName.endsWith(".txt") ||
+      fileName.endsWith(".tsv");
 
-    if (!isPdf && !isImage) {
+    if (!isPdf && !isImage && !isText) {
       return NextResponse.json(
-        { error: "Only PDF and image files are supported" },
+        {
+          error:
+            "Only PDF, image (PNG/JPEG/WebP), and text-based files (CSV/TXT) are supported. Export Excel to CSV first.",
+        },
         { status: 400 },
       );
     }
 
     const client = new Anthropic({ apiKey });
-
     const userContent: Anthropic.ContentBlockParam[] = [];
 
-    if (isPdf) {
+    if (isText) {
+      const text = await file.text();
+      const truncated = text.slice(0, 200_000);
       userContent.push({
-        type: "document",
-        source: {
-          type: "base64",
-          media_type: "application/pdf",
-          data: base64,
-        },
+        type: "text",
+        text: `Program file contents (${file.name}):\n\n${truncated}`,
       });
     } else {
-      userContent.push({
-        type: "image",
-        source: {
-          type: "base64",
-          media_type: mediaType as ImageMediaType,
-          data: base64,
-        },
-      });
+      const buffer = Buffer.from(await file.arrayBuffer());
+      const base64 = buffer.toString("base64");
+      if (isPdf) {
+        userContent.push({
+          type: "document",
+          source: {
+            type: "base64",
+            media_type: "application/pdf",
+            data: base64,
+          },
+        });
+      } else {
+        userContent.push({
+          type: "image",
+          source: {
+            type: "base64",
+            media_type: mediaType as ImageMediaType,
+            data: base64,
+          },
+        });
+      }
     }
 
     userContent.push({

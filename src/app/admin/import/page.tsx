@@ -134,7 +134,7 @@ export default function AdminImportPage() {
         <input
           ref={fileInputRef}
           type="file"
-          accept="application/pdf,image/png,image/jpeg,image/webp"
+          accept="application/pdf,image/png,image/jpeg,image/webp,text/csv,text/plain,.csv,.tsv,.txt"
           onChange={(e) => {
             setFile(e.target.files?.[0] ?? null);
             setSaved(null);
