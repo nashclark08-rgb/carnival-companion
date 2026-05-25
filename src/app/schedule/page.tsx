@@ -20,6 +20,7 @@ import { Leaderboard } from "@/components/Leaderboard";
 import { ScheduleList, ScheduleEvent } from "@/components/ScheduleList";
 import { ConnectionStatus } from "@/components/ConnectionStatus";
 import { NotificationOptIn } from "@/components/NotificationOptIn";
+import { BrandedHeader } from "@/components/BrandedHeader";
 
 function ownerLabel(name: string | undefined, idx: number) {
   return name && name.trim() ? name : `Child ${idx + 1}`;
@@ -120,12 +121,13 @@ export default function SchedulePage() {
   return (
     <div className="flex flex-1 flex-col">
       <AnnouncementBanner items={visibleAnnouncements} />
+      <BrandedHeader carnival={carnival} subtitle={carnival.schoolName} />
 
       <main className="mx-auto w-full max-w-md flex-1 space-y-6 p-4">
         <header className="flex items-center justify-between">
           <div>
             <h1 className="text-xl font-bold">{greeting}</h1>
-            <p className="text-xs text-slate-500">{carnival.name}</p>
+            <p className="text-xs text-slate-500">{carnival.venue}</p>
           </div>
           <button
             onClick={() => {
@@ -138,7 +140,12 @@ export default function SchedulePage() {
           </button>
         </header>
 
-        <CountdownPin event={nextEvent} who={who} />
+        <CountdownPin
+          event={nextEvent}
+          who={who}
+          primaryColor={carnival.branding?.primaryColor}
+          secondaryColor={carnival.branding?.secondaryColor}
+        />
 
         <NotificationOptIn announcements={visibleAnnouncements} />
 

@@ -10,6 +10,7 @@ import {
   House,
   Session,
 } from "@/lib/types";
+import { resizeImageToDataUrl } from "@/lib/image";
 
 function uid() {
   return Math.random().toString(36).slice(2, 10);
@@ -73,6 +74,141 @@ export default function AdminSetupPage() {
           <TextField label="School" value={draft.schoolName} onChange={(v) => setDraft({ ...draft, schoolName: v })} />
           <TextField label="Venue" value={draft.venue} onChange={(v) => setDraft({ ...draft, venue: v })} />
           <TextField label="Date" type="date" value={draft.date} onChange={(v) => setDraft({ ...draft, date: v })} />
+        </div>
+      </Section>
+
+      <Section title="School branding">
+        <p className="text-sm text-slate-500">
+          Logo and colours are used on the attendee app (header, countdown
+          pin). Optional — defaults apply if blank.
+        </p>
+        <div className="grid gap-4 sm:grid-cols-3">
+          <div>
+            <span className="mb-1 block text-sm font-medium">Logo</span>
+            <div className="flex items-center gap-3">
+              <div className="flex h-16 w-16 items-center justify-center rounded border border-slate-300 bg-white dark:border-slate-600 dark:bg-slate-800">
+                {draft.branding?.logoDataUrl ? (
+                  /* eslint-disable-next-line @next/next/no-img-element */
+                  <img
+                    src={draft.branding.logoDataUrl}
+                    alt="Logo preview"
+                    className="max-h-full max-w-full object-contain"
+                  />
+                ) : (
+                  <span className="text-xs text-slate-400">none</span>
+                )}
+              </div>
+              <div className="flex flex-col gap-1">
+                <input
+                  type="file"
+                  accept="image/png,image/jpeg,image/webp,image/svg+xml"
+                  onChange={async (e) => {
+                    const file = e.target.files?.[0];
+                    if (!file) return;
+                    try {
+                      const dataUrl = await resizeImageToDataUrl(file, 256);
+                      setDraft({
+                        ...draft,
+                        branding: { ...draft.branding, logoDataUrl: dataUrl },
+                      });
+                    } catch {
+                      // ignore — preview stays blank if resize fails
+                    }
+                  }}
+                  className="text-xs"
+                />
+                {draft.branding?.logoDataUrl && (
+                  <button
+                    type="button"
+                    onClick={() =>
+                      setDraft({
+                        ...draft,
+                        branding: {
+                          ...draft.branding,
+                          logoDataUrl: undefined,
+                        },
+                      })
+                    }
+                    className="self-start text-xs text-slate-500 underline hover:text-red-700"
+                  >
+                    Remove
+                  </button>
+                )}
+              </div>
+            </div>
+          </div>
+          <label className="block">
+            <span className="mb-1 block text-sm font-medium">
+              Primary colour
+            </span>
+            <div className="flex items-center gap-2">
+              <input
+                type="color"
+                className="h-10 w-12 cursor-pointer rounded border border-slate-300"
+                value={draft.branding?.primaryColor ?? "#4f46e5"}
+                onChange={(e) =>
+                  setDraft({
+                    ...draft,
+                    branding: {
+                      ...draft.branding,
+                      primaryColor: e.target.value,
+                    },
+                  })
+                }
+              />
+              <input
+                type="text"
+                className="input"
+                placeholder="#4f46e5"
+                value={draft.branding?.primaryColor ?? ""}
+                onChange={(e) =>
+                  setDraft({
+                    ...draft,
+                    branding: {
+                      ...draft.branding,
+                      primaryColor: e.target.value || undefined,
+                    },
+                  })
+                }
+              />
+            </div>
+          </label>
+          <label className="block">
+            <span className="mb-1 block text-sm font-medium">
+              Secondary colour
+            </span>
+            <div className="flex items-center gap-2">
+              <input
+                type="color"
+                className="h-10 w-12 cursor-pointer rounded border border-slate-300"
+                value={draft.branding?.secondaryColor ?? "#7c3aed"}
+                onChange={(e) =>
+                  setDraft({
+                    ...draft,
+                    branding: {
+                      ...draft.branding,
+                      secondaryColor: e.target.value,
+                    },
+                  })
+                }
+              />
+              <input
+                type="text"
+                className="input"
+                placeholder="#7c3aed"
+                value={draft.branding?.secondaryColor ?? ""}
+                onChange={(e) =>
+                  setDraft({
+                    ...draft,
+                    branding: {
+                      ...draft.branding,
+                      secondaryColor: e.target.value || undefined,
+                    },
+                  })
+                }
+              />
+            </div>
+          </label>
         </div>
       </Section>
 

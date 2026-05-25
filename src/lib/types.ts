@@ -23,6 +23,12 @@ export type Session = {
   order: number;
 };
 
+export type Branding = {
+  logoDataUrl?: string;
+  primaryColor?: string;
+  secondaryColor?: string;
+};
+
 export type Carnival = {
   id: string;
   name: string;
@@ -34,6 +40,7 @@ export type Carnival = {
   ageGroups: AgeGroup[];
   categories: Category[];
   sessions: Session[];
+  branding?: Branding;
 };
 
 export type EventType = "track" | "field";
