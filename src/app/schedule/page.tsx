@@ -48,7 +48,7 @@ export default function SchedulePage() {
   }, [events, profile]);
 
   const nextEvent = useMemo(
-    () => filtered.find((e) => e.scheduledTime + 60 * 60 * 1000 >= now) ?? null,
+    () => filtered.find((e) => e.scheduledTime + 30 * 60 * 1000 >= now) ?? null,
     [filtered, now],
   );
 
