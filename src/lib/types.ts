@@ -64,11 +64,26 @@ export type Announcement = {
   target?: AnnouncementTarget;
 };
 
-export type AttendeeProfile = {
-  role: Role;
+export type ChildProfile = {
+  houseId: string;
+  ageGroupId: string;
+  categoryId: string;
+  name?: string;
+};
+
+export type StudentProfile = {
+  role: "student";
   carnivalId: string;
   houseId: string;
   ageGroupId: string;
   categoryId: string;
   name?: string;
 };
+
+export type ParentProfile = {
+  role: "parent";
+  carnivalId: string;
+  children: ChildProfile[];
+};
+
+export type AttendeeProfile = StudentProfile | ParentProfile;

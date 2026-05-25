@@ -3,7 +3,11 @@
 import { useEffect, useMemo, useState } from "react";
 import Link from "next/link";
 import { useRouter } from "next/navigation";
-import { clearProfile, loadProfile } from "@/lib/attendee";
+import {
+  clearProfile,
+  loadProfile,
+  removeChild,
+} from "@/lib/attendee";
 import { useAnnouncements, useCarnival, useEvents } from "@/lib/db";
 import { DEFAULT_CARNIVAL_ID } from "@/lib/firebase";
 import { AttendeeProfile } from "@/lib/types";
@@ -13,7 +17,12 @@ import {
 } from "@/components/AnnouncementBanner";
 import { CountdownPin } from "@/components/CountdownPin";
 import { Leaderboard } from "@/components/Leaderboard";
-import { ScheduleList } from "@/components/ScheduleList";
+import { ScheduleList, ScheduleEvent } from "@/components/ScheduleList";
+import { ConnectionStatus } from "@/components/ConnectionStatus";
+
+function ownerLabel(name: string | undefined, idx: number) {
+  return name && name.trim() ? name : `Child ${idx + 1}`;
+}
 
 export default function SchedulePage() {
   const router = useRouter();
@@ -22,7 +31,7 @@ export default function SchedulePage() {
 
   useEffect(() => {
     const p = loadProfile();
-    if (!p) {
+    if (!p || (p.role === "parent" && p.children.length === 0)) {
       router.replace("/");
       return;
     }
@@ -38,42 +47,74 @@ export default function SchedulePage() {
   const events = useEvents(DEFAULT_CARNIVAL_ID);
   const announcements = useAnnouncements(DEFAULT_CARNIVAL_ID);
 
-  const filtered = useMemo(() => {
+  const scheduleEvents: ScheduleEvent[] = useMemo(() => {
     if (!profile) return [];
-    return events.filter(
-      (e) =>
-        e.ageGroupId === profile.ageGroupId &&
-        e.categoryId === profile.categoryId,
-    );
+    if (profile.role === "student") {
+      return events.filter(
+        (e) =>
+          e.ageGroupId === profile.ageGroupId &&
+          e.categoryId === profile.categoryId,
+      );
+    }
+    const out: ScheduleEvent[] = [];
+    profile.children.forEach((child, idx) => {
+      const label = ownerLabel(child.name, idx);
+      events
+        .filter(
+          (e) =>
+            e.ageGroupId === child.ageGroupId &&
+            e.categoryId === child.categoryId,
+        )
+        .forEach((e) => out.push({ ...e, ownerLabel: label }));
+    });
+    return out.sort((a, b) => a.scheduledTime - b.scheduledTime);
   }, [events, profile]);
 
   const visibleAnnouncements = useMemo(() => {
     if (!profile) return announcements;
     return announcements.filter((a) => {
-      if (!a.target || a.target.kind === "all") return true;
-      if (a.target.kind === "house") return a.target.houseId === profile.houseId;
-      if (a.target.kind === "ageGroup")
-        return a.target.ageGroupId === profile.ageGroupId;
+      const target = a.target;
+      if (!target || target.kind === "all") return true;
+      if (target.kind === "house") {
+        if (profile.role === "student")
+          return target.houseId === profile.houseId;
+        return profile.children.some((c) => c.houseId === target.houseId);
+      }
+      if (target.kind === "ageGroup") {
+        if (profile.role === "student")
+          return target.ageGroupId === profile.ageGroupId;
+        return profile.children.some(
+          (c) => c.ageGroupId === target.ageGroupId,
+        );
+      }
       return true;
     });
   }, [announcements, profile]);
 
   const nextEvent = useMemo(
-    () => filtered.find((e) => e.scheduledTime + 30 * 60 * 1000 >= now) ?? null,
-    [filtered, now],
+    () =>
+      scheduleEvents.find(
+        (e) => e.scheduledTime + 30 * 60 * 1000 >= now,
+      ) ?? null,
+    [scheduleEvents, now],
   );
 
   if (!profile || !carnival) {
     return <p className="p-6 text-center text-slate-500">Loading…</p>;
   }
 
-  const who = profile.role === "parent" ? profile.name ?? "Your child" : undefined;
-  const greeting =
-    profile.role === "parent"
-      ? `Following ${profile.name ?? "your child"}`
-      : profile.name
-        ? `Hi ${profile.name}`
-        : "Your schedule";
+  const isParent = profile.role === "parent";
+  const multiChild = isParent && profile.children.length > 1;
+
+  const greeting = isParent
+    ? profile.children.length === 1
+      ? `Following ${ownerLabel(profile.children[0].name, 0)}`
+      : `Following ${profile.children.length} children`
+    : profile.name
+      ? `Hi ${profile.name}`
+      : "Your schedule";
+
+  const who = nextEvent?.ownerLabel ?? (isParent ? "Your child" : undefined);
 
   return (
     <div className="flex flex-1 flex-col">
@@ -98,13 +139,82 @@ export default function SchedulePage() {
 
         <CountdownPin event={nextEvent} who={who} />
 
+        {isParent && (
+          <section className="rounded-xl border border-slate-200 bg-white p-3 dark:border-slate-700 dark:bg-slate-900">
+            <div className="flex items-center justify-between">
+              <h3 className="text-xs font-semibold uppercase tracking-wide text-slate-500">
+                Following
+              </h3>
+              <Link
+                href="/onboarding/parent?mode=addChild"
+                className="rounded-lg bg-emerald-600 px-3 py-1 text-sm font-medium text-white hover:bg-emerald-700"
+              >
+                + Add child
+              </Link>
+            </div>
+            <ul className="mt-2 space-y-1">
+              {profile.children.map((c, i) => {
+                const house = carnival.houses.find((h) => h.id === c.houseId);
+                const ag = carnival.ageGroups.find(
+                  (g) => g.id === c.ageGroupId,
+                );
+                const cat = carnival.categories.find(
+                  (x) => x.id === c.categoryId,
+                );
+                return (
+                  <li
+                    key={i}
+                    className="flex items-center justify-between gap-2 text-sm"
+                  >
+                    <span className="flex items-center gap-2">
+                      <span
+                        className="h-3 w-3 rounded-full"
+                        style={{ backgroundColor: house?.color ?? "#888" }}
+                      />
+                      <span className="font-medium">
+                        {ownerLabel(c.name, i)}
+                      </span>
+                      <span className="text-slate-500">
+                        {ag?.label ?? "?"} · {cat?.label ?? "?"}
+                      </span>
+                    </span>
+                    {profile.children.length > 1 && (
+                      <button
+                        onClick={() => {
+                          const updated = removeChild(i);
+                          setProfile(updated);
+                        }}
+                        className="text-xs text-slate-400 hover:text-red-700"
+                      >
+                        Remove
+                      </button>
+                    )}
+                  </li>
+                );
+              })}
+            </ul>
+          </section>
+        )}
+
         <Leaderboard houses={carnival.houses} />
 
         <section>
-          <h3 className="mb-2 text-sm font-semibold uppercase tracking-wide text-slate-500">
-            {profile.role === "parent" ? "Their events" : "Your events"}
-          </h3>
-          <ScheduleList events={filtered} now={now} />
+          <div className="mb-2 flex items-center justify-between">
+            <h3 className="text-sm font-semibold uppercase tracking-wide text-slate-500">
+              {isParent ? "Their events" : "Your events"}
+            </h3>
+            <Link
+              href="/announcements"
+              className="text-xs text-indigo-600 underline"
+            >
+              All announcements
+            </Link>
+          </div>
+          <ScheduleList
+            events={scheduleEvents}
+            now={now}
+            showOwners={multiChild}
+          />
         </section>
 
         <AnnouncementHistory items={visibleAnnouncements} />
@@ -116,6 +226,8 @@ export default function SchedulePage() {
           </Link>
         </p>
       </main>
+
+      <ConnectionStatus />
     </div>
   );
 }

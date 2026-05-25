@@ -3,15 +3,16 @@
 import { useState } from "react";
 import { useRouter } from "next/navigation";
 import { useCarnival } from "@/lib/db";
-import { saveProfile } from "@/lib/attendee";
+import { addChild, saveProfile } from "@/lib/attendee";
 import { DEFAULT_CARNIVAL_ID } from "@/lib/firebase";
 import { Role } from "@/lib/types";
 
 type Props = {
   role: Role;
+  mode?: "new" | "addChild";
 };
 
-export function OnboardingForm({ role }: Props) {
+export function OnboardingForm({ role, mode = "new" }: Props) {
   const router = useRouter();
   const { carnival, loading } = useCarnival(DEFAULT_CARNIVAL_ID);
   const [houseId, setHouseId] = useState("");
@@ -32,21 +33,52 @@ export function OnboardingForm({ role }: Props) {
   }
 
   const isParent = role === "parent";
+  const isAddingChild = isParent && mode === "addChild";
   const nameLabel = isParent ? "Child's first name" : "Your first name";
   const namePlaceholder = isParent ? "e.g. Mia" : "e.g. Sam";
-  const heading = isParent ? "Who are you following?" : "Tell us about yourself";
+  const heading = isAddingChild
+    ? "Add another child"
+    : isParent
+      ? "Who are you following?"
+      : "Tell us about yourself";
 
   function submit(e: React.FormEvent) {
     e.preventDefault();
     if (!houseId || !ageGroupId || !categoryId) return;
-    saveProfile({
-      role,
-      carnivalId: DEFAULT_CARNIVAL_ID,
-      houseId,
-      ageGroupId,
-      categoryId,
-      name: name.trim() || undefined,
-    });
+
+    if (isParent) {
+      if (isAddingChild) {
+        addChild({
+          houseId,
+          ageGroupId,
+          categoryId,
+          name: name.trim() || undefined,
+        });
+      } else {
+        saveProfile({
+          role: "parent",
+          carnivalId: DEFAULT_CARNIVAL_ID,
+          children: [
+            {
+              houseId,
+              ageGroupId,
+              categoryId,
+              name: name.trim() || undefined,
+            },
+          ],
+        });
+      }
+    } else {
+      saveProfile({
+        role: "student",
+        carnivalId: DEFAULT_CARNIVAL_ID,
+        houseId,
+        ageGroupId,
+        categoryId,
+        name: name.trim() || undefined,
+      });
+    }
+
     router.replace("/schedule");
   }
 
@@ -117,7 +149,11 @@ export function OnboardingForm({ role }: Props) {
         type="submit"
         className="w-full rounded-xl bg-indigo-600 px-4 py-3 font-semibold text-white shadow hover:bg-indigo-700 active:scale-[0.99]"
       >
-        See {isParent ? "their" : "my"} schedule
+        {isAddingChild
+          ? "Add child"
+          : isParent
+            ? "See their schedule"
+            : "See my schedule"}
       </button>
     </form>
   );
