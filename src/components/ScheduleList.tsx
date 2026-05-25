@@ -1,10 +1,11 @@
 "use client";
 
-import { CarnivalEvent, House } from "@/lib/types";
+import { CarnivalEvent, House, MyResult } from "@/lib/types";
 import { formatClockTime } from "@/lib/time";
 
 export type ScheduleEvent = CarnivalEvent & {
   ownerLabel?: string;
+  ownerKey?: string;
 };
 
 const CONFLICT_WINDOW_MS = 15 * 60 * 1000;
@@ -26,19 +27,32 @@ function findConflicts(events: ScheduleEvent[]): Set<string> {
   return conflicting;
 }
 
+type MyResultLookup = (event: ScheduleEvent) => MyResult | undefined;
+
 type Props = {
   events: ScheduleEvent[];
   now: number;
   showOwners?: boolean;
   houses?: House[];
+  getMyResult?: MyResultLookup;
+  onRecord?: (event: ScheduleEvent) => void;
+  primaryColor?: string;
 };
 
-export function ScheduleList({ events, now, showOwners, houses }: Props) {
+export function ScheduleList({
+  events,
+  now,
+  showOwners,
+  houses,
+  getMyResult,
+  onRecord,
+  primaryColor,
+}: Props) {
   if (events.length === 0) {
     return (
       <div className="rounded-xl border border-dashed border-slate-300 bg-white p-6 text-center text-sm text-slate-500 dark:border-slate-700 dark:bg-slate-900">
-        No events match. Check that your house, age group, and category are
-        correct.
+        No events selected yet. Tap &quot;Pick your events&quot; above to add
+        some.
       </div>
     );
   }
@@ -48,9 +62,11 @@ export function ScheduleList({ events, now, showOwners, houses }: Props) {
     <ul className="space-y-2">
       {events.map((e, i) => {
         const past = e.scheduledTime < now - 60 * 60 * 1000;
+        const started = e.scheduledTime <= now;
         const key = `${e.id}-${e.ownerLabel ?? ""}-${i}`;
         const hasConflict = conflicts.has(key);
         const hasResults = e.results && e.results.length > 0;
+        const myResult = getMyResult?.(e);
         return (
           <li
             key={key}
@@ -77,7 +93,12 @@ export function ScheduleList({ events, now, showOwners, houses }: Props) {
                 )}
                 {hasResults && (
                   <span className="rounded-full bg-indigo-100 px-2 py-0.5 text-xs font-medium text-indigo-800 dark:bg-indigo-900/40 dark:text-indigo-200">
-                    Result
+                    Official result
+                  </span>
+                )}
+                {myResult && (
+                  <span className="rounded-full bg-emerald-200 px-2 py-0.5 text-xs font-medium text-emerald-900 dark:bg-emerald-900/60 dark:text-emerald-100">
+                    My result
                   </span>
                 )}
               </div>
@@ -88,6 +109,18 @@ export function ScheduleList({ events, now, showOwners, houses }: Props) {
             <p className="mt-1 text-xs uppercase tracking-wide text-slate-500">
               {e.type} · {e.location}
             </p>
+
+            {myResult && (
+              <p className="mt-2 text-sm">
+                <strong>You:</strong>{" "}
+                {myResult.placement
+                  ? `${["1st", "2nd", "3rd"][myResult.placement - 1] ?? `${myResult.placement}th`}`
+                  : "Logged"}
+                {myResult.time ? ` · ${myResult.time}` : ""}
+                {myResult.notes ? ` · ${myResult.notes}` : ""}
+              </p>
+            )}
+
             {hasResults && e.results && (
               <ul className="mt-2 space-y-0.5 border-t border-slate-200 pt-2 text-sm dark:border-slate-700">
                 {e.results
@@ -121,6 +154,31 @@ export function ScheduleList({ events, now, showOwners, houses }: Props) {
                     );
                   })}
               </ul>
+            )}
+
+            {onRecord && started && (
+              <div className="mt-2">
+                <button
+                  type="button"
+                  onClick={() => onRecord(e)}
+                  className="rounded-lg border px-3 py-1 text-xs font-medium hover:opacity-80"
+                  style={
+                    primaryColor
+                      ? {
+                          borderColor: primaryColor,
+                          color: primaryColor,
+                          background: `${primaryColor}10`,
+                        }
+                      : {
+                          borderColor: "#4f46e5",
+                          color: "#4f46e5",
+                          background: "#eef2ff",
+                        }
+                  }
+                >
+                  {myResult ? "Edit my result" : "Record my result"}
+                </button>
+              </div>
             )}
           </li>
         );

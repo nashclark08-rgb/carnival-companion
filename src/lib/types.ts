@@ -83,12 +83,21 @@ export type Announcement = {
   target?: AnnouncementTarget;
 };
 
+export type MyResult = {
+  eventId: string;
+  placement?: number;
+  time?: string;
+  notes?: string;
+  recordedAt: number;
+};
+
 export type ChildProfile = {
   houseId: string;
   ageGroupId: string;
   categoryId: string;
   name?: string;
   selectedEventIds?: string[];
+  myResults?: MyResult[];
 };
 
 export type StudentProfile = {
@@ -99,6 +108,7 @@ export type StudentProfile = {
   categoryId: string;
   name?: string;
   selectedEventIds?: string[];
+  myResults?: MyResult[];
 };
 
 export type ParentProfile = {

@@ -3,6 +3,7 @@
 import {
   AttendeeProfile,
   ChildProfile,
+  MyResult,
   ParentProfile,
   StudentProfile,
 } from "./types";
@@ -113,6 +114,85 @@ export function setChildSelectedEvents(
     ...current,
     children: current.children.map((c, i) =>
       i === childIdx ? { ...c, selectedEventIds: ids } : c,
+    ),
+  };
+  saveProfile(updated);
+  return updated;
+}
+
+function upsertMyResult(
+  results: MyResult[] | undefined,
+  result: MyResult,
+): MyResult[] {
+  const list = results ?? [];
+  const idx = list.findIndex((r) => r.eventId === result.eventId);
+  if (idx >= 0) {
+    const next = [...list];
+    next[idx] = result;
+    return next;
+  }
+  return [...list, result];
+}
+
+function removeMyResult(
+  results: MyResult[] | undefined,
+  eventId: string,
+): MyResult[] {
+  return (results ?? []).filter((r) => r.eventId !== eventId);
+}
+
+export function recordStudentResult(result: MyResult): AttendeeProfile | null {
+  const current = loadProfile();
+  if (!current || current.role !== "student") return current;
+  const updated: StudentProfile = {
+    ...current,
+    myResults: upsertMyResult(current.myResults, result),
+  };
+  saveProfile(updated);
+  return updated;
+}
+
+export function clearStudentResult(eventId: string): AttendeeProfile | null {
+  const current = loadProfile();
+  if (!current || current.role !== "student") return current;
+  const updated: StudentProfile = {
+    ...current,
+    myResults: removeMyResult(current.myResults, eventId),
+  };
+  saveProfile(updated);
+  return updated;
+}
+
+export function recordChildResult(
+  childIdx: number,
+  result: MyResult,
+): AttendeeProfile | null {
+  const current = loadProfile();
+  if (!current || current.role !== "parent") return current;
+  const updated: ParentProfile = {
+    ...current,
+    children: current.children.map((c, i) =>
+      i === childIdx
+        ? { ...c, myResults: upsertMyResult(c.myResults, result) }
+        : c,
+    ),
+  };
+  saveProfile(updated);
+  return updated;
+}
+
+export function clearChildResult(
+  childIdx: number,
+  eventId: string,
+): AttendeeProfile | null {
+  const current = loadProfile();
+  if (!current || current.role !== "parent") return current;
+  const updated: ParentProfile = {
+    ...current,
+    children: current.children.map((c, i) =>
+      i === childIdx
+        ? { ...c, myResults: removeMyResult(c.myResults, eventId) }
+        : c,
     ),
   };
   saveProfile(updated);

@@ -4,8 +4,12 @@ import { useEffect, useMemo, useState } from "react";
 import Link from "next/link";
 import { useRouter } from "next/navigation";
 import {
+  clearChildResult,
   clearProfile,
   loadProfile,
+  recordChildResult,
+  recordStudentResult,
+  clearStudentResult,
   removeChild,
 } from "@/lib/attendee";
 import { useAnnouncements, useCarnival, useEvents } from "@/lib/db";
@@ -18,6 +22,8 @@ import {
 import { CountdownPin } from "@/components/CountdownPin";
 import { Leaderboard } from "@/components/Leaderboard";
 import { ScheduleList, ScheduleEvent } from "@/components/ScheduleList";
+import { RecordResultModal } from "@/components/RecordResultModal";
+import { MyResult } from "@/lib/types";
 import { ConnectionStatus } from "@/components/ConnectionStatus";
 import { NotificationOptIn } from "@/components/NotificationOptIn";
 import { BrandedHeader } from "@/components/BrandedHeader";
@@ -55,13 +61,17 @@ export default function SchedulePage() {
     if (profile.role === "student") {
       if (profile.selectedEventIds !== undefined) {
         const idSet = new Set(profile.selectedEventIds);
-        return events.filter((e) => idSet.has(e.id));
+        return events
+          .filter((e) => idSet.has(e.id))
+          .map((e) => ({ ...e, ownerKey: "student" }));
       }
-      return events.filter(
-        (e) =>
-          e.ageGroupId === profile.ageGroupId &&
-          e.categoryId === profile.categoryId,
-      );
+      return events
+        .filter(
+          (e) =>
+            e.ageGroupId === profile.ageGroupId &&
+            e.categoryId === profile.categoryId,
+        )
+        .map((e) => ({ ...e, ownerKey: "student" }));
     }
     const out: ScheduleEvent[] = [];
     profile.children.forEach((child, idx) => {
@@ -76,7 +86,9 @@ export default function SchedulePage() {
                 e.ageGroupId === child.ageGroupId &&
                 e.categoryId === child.categoryId,
             );
-      childEvents.forEach((e) => out.push({ ...e, ownerLabel: label }));
+      childEvents.forEach((e) =>
+        out.push({ ...e, ownerLabel: label, ownerKey: `child:${idx}` }),
+      );
     });
     return out.sort((a, b) => a.scheduledTime - b.scheduledTime);
   }, [events, profile]);
@@ -118,6 +130,54 @@ export default function SchedulePage() {
       ) ?? null,
     [scheduleEvents, now],
   );
+
+  const [recording, setRecording] = useState<ScheduleEvent | null>(null);
+
+  function lookupMyResult(event: ScheduleEvent): MyResult | undefined {
+    if (!profile) return undefined;
+    if (profile.role === "student") {
+      return profile.myResults?.find((r) => r.eventId === event.id);
+    }
+    if (event.ownerKey?.startsWith("child:")) {
+      const idx = parseInt(event.ownerKey.slice("child:".length), 10);
+      return profile.children[idx]?.myResults?.find(
+        (r) => r.eventId === event.id,
+      );
+    }
+    return undefined;
+  }
+
+  async function handleSaveResult(result: MyResult) {
+    if (!profile || !recording) return;
+    let updated;
+    if (profile.role === "student") {
+      updated = recordStudentResult(result);
+    } else if (recording.ownerKey?.startsWith("child:")) {
+      const idx = parseInt(
+        recording.ownerKey.slice("child:".length),
+        10,
+      );
+      updated = recordChildResult(idx, result);
+    }
+    if (updated) setProfile(updated);
+    setRecording(null);
+  }
+
+  async function handleClearResult() {
+    if (!profile || !recording) return;
+    let updated;
+    if (profile.role === "student") {
+      updated = clearStudentResult(recording.id);
+    } else if (recording.ownerKey?.startsWith("child:")) {
+      const idx = parseInt(
+        recording.ownerKey.slice("child:".length),
+        10,
+      );
+      updated = clearChildResult(idx, recording.id);
+    }
+    if (updated) setProfile(updated);
+    setRecording(null);
+  }
 
   if (!profile || !carnival) {
     return <p className="p-6 text-center text-slate-500">Loading…</p>;
@@ -286,6 +346,9 @@ export default function SchedulePage() {
             now={now}
             showOwners={multiChild}
             houses={carnival.houses}
+            getMyResult={lookupMyResult}
+            onRecord={(e) => setRecording(e)}
+            primaryColor={carnival.branding?.primaryColor}
           />
         </section>
 
@@ -300,6 +363,18 @@ export default function SchedulePage() {
       </main>
 
       <ConnectionStatus />
+
+      {recording && (
+        <RecordResultModal
+          event={recording}
+          existing={lookupMyResult(recording)}
+          forWho={recording.ownerLabel}
+          primaryColor={carnival.branding?.primaryColor}
+          onCancel={() => setRecording(null)}
+          onSave={handleSaveResult}
+          onClear={handleClearResult}
+        />
+      )}
     </div>
   );
 }

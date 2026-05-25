@@ -217,7 +217,10 @@ export function OnboardingForm({ role, mode = "new" }: Props) {
 
       <button
         type="submit"
-        className="w-full rounded-xl bg-indigo-600 px-4 py-3 font-semibold text-white shadow hover:bg-indigo-700 active:scale-[0.99]"
+        className="w-full rounded-xl px-4 py-3 font-semibold text-white shadow active:scale-[0.99]"
+        style={{
+          background: carnival.branding?.primaryColor ?? "#4f46e5",
+        }}
       >
         {isAddingChild
           ? "Add child"
