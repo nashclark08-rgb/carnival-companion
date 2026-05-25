@@ -37,6 +37,7 @@ export function getDb(): Firestore {
   }
   try {
     db = initializeFirestore(application, {
+      ignoreUndefinedProperties: true,
       localCache: persistentLocalCache({
         tabManager: persistentMultipleTabManager(),
       }),
