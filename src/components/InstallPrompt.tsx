@@ -1,6 +1,7 @@
 "use client";
 
 import { useEffect, useState } from "react";
+import { contrastingTextColor } from "@/lib/color";
 
 type BeforeInstallPromptEvent = Event & {
   prompt: () => Promise<void>;
@@ -88,8 +89,11 @@ export function InstallPrompt({ primaryColor }: { primaryColor?: string } = {}) 
         {!ios && deferred && (
           <button
             onClick={install}
-            className="rounded-lg px-3 py-1.5 text-xs font-semibold text-white"
-            style={{ background: primaryColor ?? "#4f46e5" }}
+            className="rounded-lg px-3 py-1.5 text-xs font-semibold"
+            style={{
+              background: primaryColor ?? "#4f46e5",
+              color: contrastingTextColor(primaryColor ?? "#4f46e5"),
+            }}
           >
             Install
           </button>

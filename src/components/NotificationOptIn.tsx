@@ -2,6 +2,7 @@
 
 import { useEffect, useState } from "react";
 import { Announcement } from "@/lib/types";
+import { contrastingTextColor } from "@/lib/color";
 
 const SEEN_KEY = "carnival-companion:notified-ids";
 
@@ -116,8 +117,11 @@ export function NotificationOptIn({
       <div className="flex flex-col gap-1">
         <button
           onClick={enable}
-          className="rounded-lg px-3 py-1.5 text-xs font-semibold text-white"
-          style={{ background: primaryColor ?? "#4f46e5" }}
+          className="rounded-lg px-3 py-1.5 text-xs font-semibold"
+          style={{
+            background: primaryColor ?? "#4f46e5",
+            color: contrastingTextColor(primaryColor ?? "#4f46e5"),
+          }}
         >
           Allow
         </button>

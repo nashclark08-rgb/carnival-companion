@@ -3,6 +3,7 @@
 import { useEffect, useState } from "react";
 import { CarnivalEvent, MyResult } from "@/lib/types";
 import { formatClockTime } from "@/lib/time";
+import { contrastingTextColor } from "@/lib/color";
 
 type Props = {
   event: CarnivalEvent;
@@ -51,9 +52,11 @@ export function RecordResultModal({
     }
   }
 
-  const primaryStyle = primaryColor
-    ? { background: primaryColor }
-    : { background: "#4f46e5" };
+  const resolvedPrimary = primaryColor ?? "#4f46e5";
+  const primaryStyle = {
+    background: resolvedPrimary,
+    color: contrastingTextColor(resolvedPrimary),
+  };
 
   return (
     <div className="fixed inset-0 z-50 flex items-end justify-center bg-black/50 p-4 sm:items-center">
@@ -84,7 +87,7 @@ export function RecordResultModal({
                 onClick={() => setPlacement(p)}
                 className={`rounded-lg px-3 py-1.5 text-sm font-medium ${
                   placement === p
-                    ? "text-white"
+                    ? ""
                     : "border border-slate-300 hover:bg-slate-100 dark:border-slate-600 dark:hover:bg-slate-800"
                 }`}
                 style={placement === p ? primaryStyle : undefined}
@@ -164,7 +167,7 @@ export function RecordResultModal({
           <button
             onClick={save}
             disabled={saving || placement === ""}
-            className="rounded-lg px-4 py-2 text-sm font-semibold text-white disabled:opacity-60"
+            className="rounded-lg px-4 py-2 text-sm font-semibold disabled:opacity-60"
             style={primaryStyle}
           >
             {saving ? "Saving…" : "Save result"}

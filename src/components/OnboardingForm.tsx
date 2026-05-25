@@ -10,6 +10,7 @@ import {
   anyAgeGroupHasBirthYear,
   findAgeGroupForBirthDate,
 } from "@/lib/age";
+import { contrastingTextColor } from "@/lib/color";
 
 type Props = {
   role: Role;
@@ -82,6 +83,8 @@ export function OnboardingForm({ role, mode = "new" }: Props) {
   const todayIso = new Date().toISOString().slice(0, 10);
   const primaryColor = carnival.branding?.primaryColor ?? "#4f46e5";
   const secondaryColor = carnival.branding?.secondaryColor ?? "#7c3aed";
+  const primaryOnText = contrastingTextColor(primaryColor);
+  const secondaryOnText = contrastingTextColor(secondaryColor);
 
   if (isParent) {
     return (
@@ -111,6 +114,8 @@ export function OnboardingForm({ role, mode = "new" }: Props) {
           }
           router.replace("/schedule");
         }}
+        primaryOnText={primaryOnText}
+        secondaryOnText={secondaryOnText}
       />
     );
   }
@@ -230,8 +235,11 @@ export function OnboardingForm({ role, mode = "new" }: Props) {
 
       <button
         type="submit"
-        className="w-full rounded-xl px-4 py-3 font-semibold text-white shadow active:scale-[0.99]"
-        style={{ background: primaryColor }}
+        className="w-full rounded-xl px-4 py-3 font-semibold shadow active:scale-[0.99]"
+        style={{
+          background: primaryColor,
+          color: primaryOnText,
+        }}
       >
         See my schedule
       </button>
@@ -248,6 +256,8 @@ type ParentFormProps = {
   isAddingChild: boolean;
   primaryColor: string;
   secondaryColor: string;
+  primaryOnText: string;
+  secondaryOnText: string;
   onSubmit: (validDrafts: ChildDraft[]) => void;
 };
 
@@ -260,6 +270,8 @@ function ParentForm({
   isAddingChild,
   primaryColor,
   secondaryColor,
+  primaryOnText,
+  secondaryOnText,
   onSubmit,
 }: ParentFormProps) {
   const maxSlots = isAddingChild ? 1 : 3;
@@ -317,8 +329,8 @@ function ParentForm({
             style={{ borderColor: secondaryColor }}
           >
             <legend
-              className="-ml-1 rounded px-2 py-0.5 text-sm font-semibold text-white"
-              style={{ background: secondaryColor }}
+              className="-ml-1 rounded px-2 py-0.5 text-sm font-semibold"
+              style={{ background: secondaryColor, color: secondaryOnText }}
             >
               Child {idx + 1}
               {drafts.length > 1 && !isAddingChild && (
@@ -449,8 +461,8 @@ function ParentForm({
 
       <button
         type="submit"
-        className="w-full rounded-xl px-4 py-3 font-semibold text-white shadow active:scale-[0.99]"
-        style={{ background: primaryColor }}
+        className="w-full rounded-xl px-4 py-3 font-semibold shadow active:scale-[0.99]"
+        style={{ background: primaryColor, color: primaryOnText }}
       >
         {isAddingChild
           ? "Add child"

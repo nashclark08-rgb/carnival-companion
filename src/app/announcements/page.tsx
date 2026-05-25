@@ -7,6 +7,7 @@ import { loadProfile } from "@/lib/attendee";
 import { useAnnouncements, useCarnival } from "@/lib/db";
 import { DEFAULT_CARNIVAL_ID } from "@/lib/firebase";
 import { AttendeeProfile, Severity } from "@/lib/types";
+import { contrastingTextColor } from "@/lib/color";
 
 const SEVERITY_STYLES: Record<Severity, string> = {
   notice: "bg-sky-600 text-white",
@@ -103,7 +104,7 @@ export default function AnnouncementsPage() {
               onClick={() => setFilter(f)}
               className={`whitespace-nowrap rounded-full px-3 py-1 text-xs font-medium ${
                 active
-                  ? "text-white"
+                  ? ""
                   : "bg-slate-100 text-slate-600 dark:bg-slate-800 dark:text-slate-300"
               }`}
               style={
@@ -111,6 +112,9 @@ export default function AnnouncementsPage() {
                   ? {
                       background:
                         carnival?.branding?.primaryColor ?? "#4f46e5",
+                      color: contrastingTextColor(
+                        carnival?.branding?.primaryColor ?? "#4f46e5",
+                      ),
                     }
                   : undefined
               }

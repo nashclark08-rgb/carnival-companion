@@ -3,6 +3,7 @@
 import { useMemo, useState } from "react";
 import { CarnivalEvent, Carnival } from "@/lib/types";
 import { formatClockTime } from "@/lib/time";
+import { contrastingTextColor } from "@/lib/color";
 
 type Props = {
   carnival: Carnival;
@@ -115,7 +116,10 @@ export function EventPicker({
   ).length;
 
   const primaryStyle = primaryColor
-    ? { background: primaryColor }
+    ? {
+        background: primaryColor,
+        color: contrastingTextColor(primaryColor),
+      }
     : undefined;
 
   return (
@@ -244,8 +248,10 @@ export function EventPicker({
             type="button"
             onClick={() => onSave(Array.from(selected))}
             disabled={saving}
-            className="rounded-lg px-4 py-2 text-sm font-semibold text-white shadow disabled:opacity-60"
-            style={primaryStyle ?? { background: "#4f46e5" }}
+            className="rounded-lg px-4 py-2 text-sm font-semibold shadow disabled:opacity-60"
+            style={
+              primaryStyle ?? { background: "#4f46e5", color: "#ffffff" }
+            }
           >
             {saving ? "Saving…" : "Save selection"}
           </button>

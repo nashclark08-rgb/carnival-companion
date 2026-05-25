@@ -24,6 +24,7 @@ import { Leaderboard } from "@/components/Leaderboard";
 import { ScheduleList, ScheduleEvent } from "@/components/ScheduleList";
 import { RecordResultModal } from "@/components/RecordResultModal";
 import { MyResult } from "@/lib/types";
+import { contrastingTextColor } from "@/lib/color";
 import { ConnectionStatus } from "@/components/ConnectionStatus";
 import { NotificationOptIn } from "@/components/NotificationOptIn";
 import { BrandedHeader } from "@/components/BrandedHeader";
@@ -226,10 +227,13 @@ export default function SchedulePage() {
               </h3>
               <Link
                 href="/onboarding/parent?mode=addChild"
-                className="rounded-lg px-3 py-1 text-sm font-medium text-white"
+                className="rounded-lg px-3 py-1 text-sm font-medium"
                 style={{
                   background:
                     carnival.branding?.secondaryColor ?? "#059669",
+                  color: contrastingTextColor(
+                    carnival.branding?.secondaryColor ?? "#059669",
+                  ),
                 }}
               >
                 + Add child

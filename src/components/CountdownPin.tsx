@@ -3,6 +3,7 @@
 import { useEffect, useState } from "react";
 import { CarnivalEvent } from "@/lib/types";
 import { formatClockTime, formatCountdown } from "@/lib/time";
+import { contrastingTextColor, readableBorderColor } from "@/lib/color";
 
 type Props = {
   event: CarnivalEvent | null;
@@ -47,14 +48,21 @@ export function CountdownPin({
   const fill = inProgress
     ? IN_PROGRESS_FILL
     : primaryColor ?? FALLBACK_PRIMARY;
-  const border = secondaryColor ?? FALLBACK_SECONDARY;
+  const border = inProgress
+    ? "rgba(255,255,255,0.4)"
+    : readableBorderColor(
+        primaryColor ?? FALLBACK_PRIMARY,
+        secondaryColor ?? FALLBACK_SECONDARY,
+      );
+  const text = contrastingTextColor(fill);
 
   return (
     <div
-      className="rounded-2xl border-4 p-6 text-white shadow-lg"
+      className="rounded-2xl border-4 p-6 shadow-lg"
       style={{
         background: fill,
-        borderColor: inProgress ? "rgba(255,255,255,0.4)" : border,
+        borderColor: border,
+        color: text,
       }}
     >
       <p className="text-sm font-medium uppercase tracking-wide opacity-80">
