@@ -1,6 +1,6 @@
 "use client";
 
-import { CarnivalEvent } from "@/lib/types";
+import { CarnivalEvent, House } from "@/lib/types";
 import { formatClockTime } from "@/lib/time";
 
 export type ScheduleEvent = CarnivalEvent & {
@@ -30,9 +30,10 @@ type Props = {
   events: ScheduleEvent[];
   now: number;
   showOwners?: boolean;
+  houses?: House[];
 };
 
-export function ScheduleList({ events, now, showOwners }: Props) {
+export function ScheduleList({ events, now, showOwners, houses }: Props) {
   if (events.length === 0) {
     return (
       <div className="rounded-xl border border-dashed border-slate-300 bg-white p-6 text-center text-sm text-slate-500 dark:border-slate-700 dark:bg-slate-900">
@@ -49,12 +50,13 @@ export function ScheduleList({ events, now, showOwners }: Props) {
         const past = e.scheduledTime < now - 60 * 60 * 1000;
         const key = `${e.id}-${e.ownerLabel ?? ""}-${i}`;
         const hasConflict = conflicts.has(key);
+        const hasResults = e.results && e.results.length > 0;
         return (
           <li
             key={key}
             className={`rounded-xl border p-4 transition ${
               past
-                ? "border-slate-200 bg-slate-50 opacity-60 dark:border-slate-800 dark:bg-slate-900/40"
+                ? "border-slate-200 bg-slate-50 opacity-80 dark:border-slate-800 dark:bg-slate-900/40"
                 : hasConflict
                   ? "border-amber-400 bg-amber-50 dark:border-amber-500/60 dark:bg-amber-950/30"
                   : "border-slate-200 bg-white dark:border-slate-700 dark:bg-slate-900"
@@ -73,6 +75,11 @@ export function ScheduleList({ events, now, showOwners }: Props) {
                     Clash
                   </span>
                 )}
+                {hasResults && (
+                  <span className="rounded-full bg-indigo-100 px-2 py-0.5 text-xs font-medium text-indigo-800 dark:bg-indigo-900/40 dark:text-indigo-200">
+                    Result
+                  </span>
+                )}
               </div>
               <span className="text-sm font-medium text-slate-600 dark:text-slate-300">
                 {formatClockTime(e.scheduledTime)}
@@ -81,6 +88,40 @@ export function ScheduleList({ events, now, showOwners }: Props) {
             <p className="mt-1 text-xs uppercase tracking-wide text-slate-500">
               {e.type} · {e.location}
             </p>
+            {hasResults && e.results && (
+              <ul className="mt-2 space-y-0.5 border-t border-slate-200 pt-2 text-sm dark:border-slate-700">
+                {e.results
+                  .slice()
+                  .sort((a, b) => a.placement - b.placement)
+                  .map((r) => {
+                    const house = houses?.find((h) => h.id === r.houseId);
+                    return (
+                      <li
+                        key={r.placement}
+                        className="flex items-center gap-2"
+                      >
+                        <span className="w-6 text-xs font-semibold text-slate-500">
+                          {["1st", "2nd", "3rd"][r.placement - 1] ??
+                            `${r.placement}th`}
+                        </span>
+                        {house && (
+                          <span
+                            className="h-2.5 w-2.5 rounded-full"
+                            style={{ backgroundColor: house.color }}
+                            aria-hidden
+                          />
+                        )}
+                        <span>{r.name || "—"}</span>
+                        {r.time && (
+                          <span className="ml-auto text-xs tabular-nums text-slate-500">
+                            {r.time}
+                          </span>
+                        )}
+                      </li>
+                    );
+                  })}
+              </ul>
+            )}
           </li>
         );
       })}

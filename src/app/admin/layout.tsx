@@ -14,6 +14,7 @@ const NAV = [
   { href: "/admin/announcements", label: "Announcements" },
   { href: "/admin/preview", label: "Preview" },
   { href: "/admin/qr", label: "QR code" },
+  { href: "/admin/print", label: "Print" },
 ];
 
 export default function AdminLayout({

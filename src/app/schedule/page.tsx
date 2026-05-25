@@ -21,6 +21,7 @@ import { ScheduleList, ScheduleEvent } from "@/components/ScheduleList";
 import { ConnectionStatus } from "@/components/ConnectionStatus";
 import { NotificationOptIn } from "@/components/NotificationOptIn";
 import { BrandedHeader } from "@/components/BrandedHeader";
+import { InstallPrompt } from "@/components/InstallPrompt";
 
 function ownerLabel(name: string | undefined, idx: number) {
   return name && name.trim() ? name : `Child ${idx + 1}`;
@@ -148,6 +149,7 @@ export default function SchedulePage() {
         />
 
         <NotificationOptIn announcements={visibleAnnouncements} />
+        <InstallPrompt />
 
         {isParent && (
           <section className="rounded-xl border border-slate-200 bg-white p-3 dark:border-slate-700 dark:bg-slate-900">
@@ -224,6 +226,7 @@ export default function SchedulePage() {
             events={scheduleEvents}
             now={now}
             showOwners={multiChild}
+            houses={carnival.houses}
           />
         </section>
 

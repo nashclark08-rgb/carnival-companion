@@ -47,6 +47,13 @@ export type Carnival = {
 
 export type EventType = "track" | "field";
 
+export type EventResult = {
+  placement: number;
+  name?: string;
+  houseId?: string;
+  time?: string;
+};
+
 export type CarnivalEvent = {
   id: string;
   name: string;
@@ -56,6 +63,7 @@ export type CarnivalEvent = {
   sessionId: string;
   scheduledTime: number;
   location: string;
+  results?: EventResult[];
 };
 
 export type Severity = "notice" | "reminder" | "urgent";

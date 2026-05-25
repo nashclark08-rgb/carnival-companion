@@ -1,7 +1,7 @@
 "use client";
 
-import { useState } from "react";
-import { writeBatch, doc } from "firebase/firestore";
+import { useEffect, useState } from "react";
+import { writeBatch, doc, collection, getDocs } from "firebase/firestore";
 import {
   deleteEvent,
   upsertEvent,
@@ -10,7 +10,7 @@ import {
   useEvents,
 } from "@/lib/db";
 import { DEFAULT_CARNIVAL_ID, getDb } from "@/lib/firebase";
-import { CarnivalEvent, EventType } from "@/lib/types";
+import { CarnivalEvent, EventResult, EventType } from "@/lib/types";
 import {
   formatDateTimeLocal,
   parseDateTimeLocal,
@@ -38,11 +38,32 @@ export default function AdminEventsPage() {
   const { carnival } = useCarnival(DEFAULT_CARNIVAL_ID);
   const events = useEvents(DEFAULT_CARNIVAL_ID);
   const [editing, setEditing] = useState<CarnivalEvent | null>(null);
+  const [resultsEvent, setResultsEvent] = useState<CarnivalEvent | null>(null);
+  const [resultsDraft, setResultsDraft] = useState<EventResult[]>([]);
   const [shiftOpen, setShiftOpen] = useState(false);
   const [shiftMinutes, setShiftMinutes] = useState(15);
   const [notifyShift, setNotifyShift] = useState(true);
   const [shiftBusy, setShiftBusy] = useState(false);
   const [shiftScope, setShiftScope] = useState<"all" | "future">("future");
+  const [clearOpen, setClearOpen] = useState(false);
+  const [clearBusy, setClearBusy] = useState(false);
+
+  useEffect(() => {
+    if (!resultsEvent) return;
+    const existing = resultsEvent.results ?? [];
+    const filled: EventResult[] = [1, 2, 3].map((p) => {
+      const r = existing.find((x) => x.placement === p);
+      return (
+        r ?? {
+          placement: p,
+          name: "",
+          houseId: "",
+          time: "",
+        }
+      );
+    });
+    setResultsDraft(filled);
+  }, [resultsEvent]);
 
   if (!carnival) {
     return (
@@ -71,6 +92,43 @@ export default function AdminEventsPage() {
   async function remove(id: string) {
     if (!confirm("Delete this event?")) return;
     await deleteEvent(DEFAULT_CARNIVAL_ID, id);
+  }
+
+  async function saveResults() {
+    if (!resultsEvent) return;
+    const cleaned: EventResult[] = resultsDraft
+      .map((r) => ({
+        placement: r.placement,
+        name: r.name?.trim() || undefined,
+        houseId: r.houseId || undefined,
+        time: r.time?.trim() || undefined,
+      }))
+      .filter((r) => r.name || r.houseId || r.time);
+    await upsertEvent(DEFAULT_CARNIVAL_ID, {
+      ...resultsEvent,
+      results: cleaned,
+    });
+    setResultsEvent(null);
+  }
+
+  async function clearAllEvents() {
+    setClearBusy(true);
+    try {
+      const db = getDb();
+      const eventsCol = collection(
+        db,
+        "carnivals",
+        DEFAULT_CARNIVAL_ID,
+        "events",
+      );
+      const snap = await getDocs(eventsCol);
+      const batch = writeBatch(db);
+      snap.forEach((d) => batch.delete(d.ref));
+      await batch.commit();
+      setClearOpen(false);
+    } finally {
+      setClearBusy(false);
+    }
   }
 
   async function applyShift() {
@@ -159,6 +217,14 @@ export default function AdminEventsPage() {
                 </p>
               </div>
               <div className="flex gap-2">
+                <button
+                  onClick={() => setResultsEvent(e)}
+                  className="rounded-lg border border-slate-300 px-3 py-1 text-sm hover:bg-slate-100 dark:border-slate-600 dark:hover:bg-slate-800"
+                >
+                  {e.results && e.results.length > 0
+                    ? `Results (${e.results.length})`
+                    : "Results"}
+                </button>
                 <button
                   onClick={() => setEditing(e)}
                   className="rounded-lg border border-slate-300 px-3 py-1 text-sm hover:bg-slate-100 dark:border-slate-600 dark:hover:bg-slate-800"
@@ -309,6 +375,142 @@ export default function AdminEventsPage() {
                 className="rounded-lg bg-indigo-600 px-4 py-2 text-sm font-semibold text-white hover:bg-indigo-700"
               >
                 Save event
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
+
+      {events.length > 0 && (
+        <details className="rounded-xl border border-slate-200 bg-white p-4 dark:border-slate-700 dark:bg-slate-900">
+          <summary className="cursor-pointer text-sm font-medium text-slate-600">
+            Danger zone: clear all events
+          </summary>
+          <p className="mt-2 text-sm text-slate-500">
+            Deletes every event in this carnival. Houses, age groups,
+            categories, sessions, branding, and announcements are not
+            touched.
+          </p>
+          <button
+            onClick={() => setClearOpen(true)}
+            className="mt-3 rounded-lg border border-red-300 px-3 py-1 text-sm text-red-700 hover:bg-red-50"
+          >
+            Clear all {events.length} events…
+          </button>
+        </details>
+      )}
+
+      {resultsEvent && (
+        <div className="fixed inset-0 z-50 flex items-end justify-center bg-black/50 p-4 sm:items-center">
+          <div className="w-full max-w-lg space-y-3 rounded-2xl bg-white p-5 shadow-xl dark:bg-slate-900">
+            <h2 className="text-lg font-bold">
+              Record results — {resultsEvent.name}
+            </h2>
+            <p className="text-xs text-slate-500">
+              {formatClockTime(resultsEvent.scheduledTime)} ·{" "}
+              {resultsEvent.location}
+            </p>
+            <div className="space-y-2">
+              {resultsDraft.map((r, idx) => {
+                const place = ["1st", "2nd", "3rd"][r.placement - 1] ?? `${r.placement}th`;
+                return (
+                  <div key={r.placement} className="grid grid-cols-12 gap-2">
+                    <span className="col-span-1 self-center text-sm font-semibold">
+                      {place}
+                    </span>
+                    <input
+                      className="input col-span-4"
+                      placeholder="Name (optional)"
+                      value={r.name ?? ""}
+                      onChange={(e) =>
+                        setResultsDraft(
+                          resultsDraft.map((x, i) =>
+                            i === idx ? { ...x, name: e.target.value } : x,
+                          ),
+                        )
+                      }
+                    />
+                    <select
+                      className="input col-span-4"
+                      value={r.houseId ?? ""}
+                      onChange={(e) =>
+                        setResultsDraft(
+                          resultsDraft.map((x, i) =>
+                            i === idx ? { ...x, houseId: e.target.value } : x,
+                          ),
+                        )
+                      }
+                    >
+                      <option value="">House…</option>
+                      {carnival.houses.map((h) => (
+                        <option key={h.id} value={h.id}>
+                          {h.name}
+                        </option>
+                      ))}
+                    </select>
+                    <input
+                      className="input col-span-3"
+                      placeholder="Time (opt)"
+                      value={r.time ?? ""}
+                      onChange={(e) =>
+                        setResultsDraft(
+                          resultsDraft.map((x, i) =>
+                            i === idx ? { ...x, time: e.target.value } : x,
+                          ),
+                        )
+                      }
+                    />
+                  </div>
+                );
+              })}
+            </div>
+            <p className="text-xs text-slate-500">
+              Empty rows are discarded on save. Houses get a points bump only
+              when you update them in the Leaderboard tab — results don&apos;t
+              auto-score yet.
+            </p>
+            <div className="flex justify-end gap-2 pt-2">
+              <button
+                onClick={() => setResultsEvent(null)}
+                className="rounded-lg border border-slate-300 px-3 py-2 text-sm hover:bg-slate-100 dark:border-slate-600 dark:hover:bg-slate-800"
+              >
+                Cancel
+              </button>
+              <button
+                onClick={saveResults}
+                className="rounded-lg bg-indigo-600 px-4 py-2 text-sm font-semibold text-white hover:bg-indigo-700"
+              >
+                Save results
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
+
+      {clearOpen && (
+        <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/50 p-4">
+          <div className="w-full max-w-sm space-y-4 rounded-2xl bg-white p-5 shadow-xl dark:bg-slate-900">
+            <h2 className="text-lg font-bold text-red-700">
+              Delete all {events.length} events?
+            </h2>
+            <p className="text-sm text-slate-700 dark:text-slate-300">
+              This cannot be undone. Houses, age groups, categories, sessions,
+              branding, and announcements are kept.
+            </p>
+            <div className="flex justify-end gap-2">
+              <button
+                onClick={() => setClearOpen(false)}
+                disabled={clearBusy}
+                className="rounded-lg border border-slate-300 px-3 py-2 text-sm hover:bg-slate-100 dark:border-slate-600 dark:hover:bg-slate-800"
+              >
+                Cancel
+              </button>
+              <button
+                onClick={clearAllEvents}
+                disabled={clearBusy}
+                className="rounded-lg bg-red-600 px-4 py-2 text-sm font-semibold text-white hover:bg-red-700 disabled:opacity-60"
+              >
+                {clearBusy ? "Deleting…" : "Yes, delete all events"}
               </button>
             </div>
           </div>
