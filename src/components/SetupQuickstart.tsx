@@ -20,9 +20,15 @@ type ExtractedEvent = {
   location: string;
 };
 
+type ExtractedAgeGroup = {
+  label: string;
+  birthYearFrom?: number;
+  birthYearTo?: number;
+};
+
 type Extraction = {
   carnival: { name?: string; date?: string; venue?: string };
-  ageGroups: { label: string }[];
+  ageGroups: ExtractedAgeGroup[];
   categories: { label: string }[];
   sessions: { name: string; order: number }[];
   events: ExtractedEvent[];
@@ -34,10 +40,10 @@ type Props = {
   onApplyDraft: (next: Carnival) => void;
 };
 
-function mergeByLabel<T extends { id: string; label: string }>(
+function mergeByLabel<T extends { id: string; label: string }, X extends { label: string }>(
   existing: T[],
-  extracted: { label: string }[],
-  makeNew: (label: string) => T,
+  extracted: X[],
+  makeNew: (x: X) => T,
 ): { merged: T[]; idByLabel: Map<string, string> } {
   const idByLabel = new Map<string, string>();
   existing.forEach((e) => idByLabel.set(e.label.toLowerCase(), e.id));
@@ -45,7 +51,7 @@ function mergeByLabel<T extends { id: string; label: string }>(
   for (const x of extracted) {
     const key = x.label.toLowerCase();
     if (!idByLabel.has(key)) {
-      const item = makeNew(x.label);
+      const item = makeNew(x);
       merged.push(item);
       idByLabel.set(key, item.id);
     }
@@ -118,16 +124,21 @@ export function SetupQuickstart({ draft, onApplyDraft }: Props) {
     setError(null);
     try {
       const { merged: mergedAgeGroups, idByLabel: ageGroupIdByLabel } =
-        mergeByLabel<AgeGroup>(
+        mergeByLabel<AgeGroup, ExtractedAgeGroup>(
           draft.ageGroups,
           extraction.ageGroups,
-          (label) => ({ id: uid(), label }),
+          (x) => ({
+            id: uid(),
+            label: x.label,
+            birthYearFrom: x.birthYearFrom,
+            birthYearTo: x.birthYearTo,
+          }),
         );
       const { merged: mergedCategories, idByLabel: categoryIdByLabel } =
-        mergeByLabel<Category>(
+        mergeByLabel<Category, { label: string }>(
           draft.categories,
           extraction.categories,
-          (label) => ({ id: uid(), label }),
+          (x) => ({ id: uid(), label: x.label }),
         );
       const { merged: mergedSessions, idByName: sessionIdByName } =
         mergeSessionsByName(draft.sessions, extraction.sessions);

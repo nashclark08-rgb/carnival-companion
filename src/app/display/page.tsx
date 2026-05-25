@@ -56,17 +56,46 @@ export default function DisplayPage() {
     );
   }
 
+  const primary = carnival.branding?.primaryColor;
+  const secondary = carnival.branding?.secondaryColor;
+  const logo = carnival.branding?.logoDataUrl;
   const maxPoints = Math.max(...sortedHouses.map((h) => h.points), 1);
+  const inProgressBg = secondary
+    ? `linear-gradient(135deg, ${secondary}, ${primary ?? secondary})`
+    : "linear-gradient(135deg, #10b981, #0d9488)";
 
   return (
     <main className="min-h-screen bg-slate-950 text-white">
       <div className="mx-auto max-w-7xl space-y-8 p-8">
-        <header className="flex items-baseline justify-between border-b border-slate-800 pb-4">
-          <div>
-            <h1 className="text-4xl font-bold tracking-tight">{carnival.name}</h1>
-            <p className="mt-1 text-lg text-slate-400">
-              {carnival.venue} · {carnival.date}
-            </p>
+        <header className="flex items-center justify-between gap-6 border-b border-slate-800 pb-4">
+          <div className="flex items-center gap-5">
+            {logo ? (
+              /* eslint-disable-next-line @next/next/no-img-element */
+              <img
+                src={logo}
+                alt={carnival.schoolName ?? "School logo"}
+                className="h-20 w-20 rounded-lg bg-white/10 object-contain p-2"
+              />
+            ) : (
+              <div
+                className="h-20 w-20 rounded-lg"
+                style={{
+                  background: primary
+                    ? `linear-gradient(135deg, ${primary}, ${secondary ?? primary})`
+                    : "linear-gradient(135deg, #4f46e5, #7c3aed)",
+                }}
+              />
+            )}
+            <div>
+              <h1 className="text-4xl font-bold tracking-tight">
+                {carnival.name}
+              </h1>
+              <p className="mt-1 text-lg text-slate-400">
+                {carnival.schoolName ? `${carnival.schoolName} · ` : ""}
+                {carnival.venue}
+                {carnival.date ? ` · ${carnival.date}` : ""}
+              </p>
+            </div>
           </div>
           <p className="text-6xl font-bold tabular-nums">{clock}</p>
         </header>
@@ -101,11 +130,12 @@ export default function DisplayPage() {
               {inProgress.map((e) => (
                 <li
                   key={e.id}
-                  className="rounded-2xl bg-emerald-700 p-6"
+                  className="rounded-2xl p-6 text-white shadow-lg"
+                  style={{ background: inProgressBg }}
                 >
                   <p className="text-3xl font-bold">{e.name}</p>
-                  <p className="mt-1 text-lg text-emerald-100">{e.location}</p>
-                  <p className="mt-2 text-sm uppercase tracking-wide text-emerald-200">
+                  <p className="mt-1 text-lg opacity-90">{e.location}</p>
+                  <p className="mt-2 text-sm uppercase tracking-wide opacity-80">
                     Started at {formatClockTime(e.scheduledTime)}
                   </p>
                 </li>
@@ -123,6 +153,11 @@ export default function DisplayPage() {
               <li
                 key={e.id}
                 className="rounded-xl bg-slate-900 p-4"
+                style={
+                  primary
+                    ? { borderTop: `3px solid ${primary}` }
+                    : undefined
+                }
               >
                 <p className="text-2xl font-bold tabular-nums">
                   {formatClockTime(e.scheduledTime)}

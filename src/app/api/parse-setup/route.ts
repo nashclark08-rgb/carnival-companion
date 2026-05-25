@@ -16,7 +16,11 @@ Output STRICT JSON ONLY in this exact shape:
     "venue": "string"           // venue/oval name if visible, otherwise omit
   },
   "ageGroups": [
-    { "label": "Under 13" }     // one per distinct age group on the program
+    {
+      "label": "Under 13",          // one per distinct age group on the program
+      "birthYearFrom": 2013,         // OPTIONAL — earliest birth year that falls in this group
+      "birthYearTo": 2013             // OPTIONAL — latest birth year that falls in this group
+    }
   ],
   "categories": [
     { "label": "Boys" }         // typically Boys, Girls. Include Open / Mixed / All-abilities if the program uses them.
@@ -39,6 +43,7 @@ Output STRICT JSON ONLY in this exact shape:
 }
 
 Rules:
+- birthYearFrom / birthYearTo on age groups: include ONLY when the program explicitly states which birth years are in that group (e.g. "U13 (born 2013)" or "Year 7 — 2013"). Use 4-digit years. If a group covers multiple years, set From to the earliest and To to the latest. Omit both fields if the program doesn't give you the years.
 - Track events: sprints, distance, relays, hurdles, cross-country, walks.
 - Field events: long jump, high jump, triple jump, shot put, discus, javelin.
 - Each session normally has multiple events per age group + category combination — extract them all. Do NOT collapse "100m U13 Boys" and "100m U13 Girls" into one entry.
@@ -67,9 +72,15 @@ type ExtractedEvent = {
   location?: string;
 };
 
+type ExtractedAgeGroup = {
+  label?: string;
+  birthYearFrom?: number;
+  birthYearTo?: number;
+};
+
 type ExtractionPayload = {
   carnival?: ExtractedCarnival;
-  ageGroups?: { label?: string }[];
+  ageGroups?: ExtractedAgeGroup[];
   categories?: { label?: string }[];
   sessions?: { name?: string; order?: number }[];
   events?: ExtractedEvent[];
@@ -204,7 +215,13 @@ export async function POST(req: NextRequest) {
     return NextResponse.json({
       carnival: parsed.carnival ?? {},
       ageGroups: (parsed.ageGroups ?? [])
-        .map((g) => ({ label: (g.label ?? "").trim() }))
+        .map((g) => ({
+          label: (g.label ?? "").trim(),
+          birthYearFrom:
+            typeof g.birthYearFrom === "number" ? g.birthYearFrom : undefined,
+          birthYearTo:
+            typeof g.birthYearTo === "number" ? g.birthYearTo : undefined,
+        }))
         .filter((g) => g.label),
       categories: (parsed.categories ?? [])
         .map((c) => ({ label: (c.label ?? "").trim() }))
