@@ -53,6 +53,10 @@ export default function SchedulePage() {
   const scheduleEvents: ScheduleEvent[] = useMemo(() => {
     if (!profile) return [];
     if (profile.role === "student") {
+      if (profile.selectedEventIds !== undefined) {
+        const idSet = new Set(profile.selectedEventIds);
+        return events.filter((e) => idSet.has(e.id));
+      }
       return events.filter(
         (e) =>
           e.ageGroupId === profile.ageGroupId &&
@@ -62,16 +66,28 @@ export default function SchedulePage() {
     const out: ScheduleEvent[] = [];
     profile.children.forEach((child, idx) => {
       const label = ownerLabel(child.name, idx);
-      events
-        .filter(
-          (e) =>
-            e.ageGroupId === child.ageGroupId &&
-            e.categoryId === child.categoryId,
-        )
-        .forEach((e) => out.push({ ...e, ownerLabel: label }));
+      const childEvents =
+        child.selectedEventIds !== undefined
+          ? events.filter((e) =>
+              child.selectedEventIds!.includes(e.id),
+            )
+          : events.filter(
+              (e) =>
+                e.ageGroupId === child.ageGroupId &&
+                e.categoryId === child.categoryId,
+            );
+      childEvents.forEach((e) => out.push({ ...e, ownerLabel: label }));
     });
     return out.sort((a, b) => a.scheduledTime - b.scheduledTime);
   }, [events, profile]);
+
+  const studentHasPicked =
+    profile?.role === "student" && profile.selectedEventIds !== undefined;
+  const parentChildrenAllPicked =
+    profile?.role === "parent" &&
+    profile.children.every((c) => c.selectedEventIds !== undefined);
+  const showPickCta =
+    profile && !studentHasPicked && profile.role === "student";
 
   const visibleAnnouncements = useMemo(() => {
     if (!profile) return announcements;
@@ -173,6 +189,7 @@ export default function SchedulePage() {
                 const cat = carnival.categories.find(
                   (x) => x.id === c.categoryId,
                 );
+                const picked = c.selectedEventIds?.length ?? null;
                 return (
                   <li
                     key={i}
@@ -190,22 +207,60 @@ export default function SchedulePage() {
                         {ag?.label ?? "?"} · {cat?.label ?? "?"}
                       </span>
                     </span>
-                    {profile.children.length > 1 && (
-                      <button
-                        onClick={() => {
-                          const updated = removeChild(i);
-                          setProfile(updated);
-                        }}
-                        className="text-xs text-slate-400 hover:text-red-700"
+                    <span className="flex items-center gap-2">
+                      <Link
+                        href={`/onboarding/events?child=${i}`}
+                        className="rounded-md border border-slate-300 px-2 py-0.5 text-xs hover:bg-slate-100 dark:border-slate-600 dark:hover:bg-slate-800"
                       >
-                        Remove
-                      </button>
-                    )}
+                        {picked === null
+                          ? "Pick events"
+                          : `Events (${picked})`}
+                      </Link>
+                      {profile.children.length > 1 && (
+                        <button
+                          onClick={() => {
+                            const updated = removeChild(i);
+                            setProfile(updated);
+                          }}
+                          className="text-xs text-slate-400 hover:text-red-700"
+                        >
+                          Remove
+                        </button>
+                      )}
+                    </span>
                   </li>
                 );
               })}
             </ul>
+            {!parentChildrenAllPicked && (
+              <p className="mt-2 text-xs text-amber-700 dark:text-amber-400">
+                Tip: tap &quot;Pick events&quot; next to a child to choose only
+                the events they&apos;re competing in. Until then, all events
+                for their age group + category are shown.
+              </p>
+            )}
           </section>
+        )}
+
+        {showPickCta && (
+          <Link
+            href="/onboarding/events"
+            className="block rounded-xl border border-indigo-300 bg-indigo-50 p-3 text-sm text-indigo-900 hover:bg-indigo-100 dark:border-indigo-700 dark:bg-indigo-950/40 dark:text-indigo-200"
+          >
+            <strong>Pick your events →</strong> Tick which events you&apos;re
+            competing in so your schedule shows just those.
+          </Link>
+        )}
+
+        {profile.role === "student" && studentHasPicked && (
+          <div className="flex justify-end">
+            <Link
+              href="/onboarding/events"
+              className="text-xs text-indigo-600 underline"
+            >
+              Edit my events ({profile.selectedEventIds?.length ?? 0})
+            </Link>
+          </div>
         )}
 
         <Leaderboard houses={carnival.houses} />

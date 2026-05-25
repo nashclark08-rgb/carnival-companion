@@ -93,6 +93,32 @@ export function removeChild(idx: number): AttendeeProfile | null {
   return updated;
 }
 
+export function setStudentSelectedEvents(
+  ids: string[],
+): AttendeeProfile | null {
+  const current = loadProfile();
+  if (!current || current.role !== "student") return current;
+  const updated: StudentProfile = { ...current, selectedEventIds: ids };
+  saveProfile(updated);
+  return updated;
+}
+
+export function setChildSelectedEvents(
+  childIdx: number,
+  ids: string[],
+): AttendeeProfile | null {
+  const current = loadProfile();
+  if (!current || current.role !== "parent") return current;
+  const updated: ParentProfile = {
+    ...current,
+    children: current.children.map((c, i) =>
+      i === childIdx ? { ...c, selectedEventIds: ids } : c,
+    ),
+  };
+  saveProfile(updated);
+  return updated;
+}
+
 export function clearProfile() {
   if (typeof window === "undefined") return;
   window.localStorage.removeItem(KEY);

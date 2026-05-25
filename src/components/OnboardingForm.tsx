@@ -75,14 +75,21 @@ export function OnboardingForm({ role, mode = "new" }: Props) {
     e.preventDefault();
     if (!houseId || !ageGroupId || !categoryId) return;
 
+    let pickerHref = "/onboarding/events";
+
     if (isParent) {
       if (isAddingChild) {
-        addChild({
+        const updated = addChild({
           houseId,
           ageGroupId,
           categoryId,
           name: name.trim() || undefined,
         });
+        const idx =
+          updated && updated.role === "parent"
+            ? updated.children.length - 1
+            : 0;
+        pickerHref = `/onboarding/events?child=${idx}`;
       } else {
         saveProfile({
           role: "parent",
@@ -96,6 +103,7 @@ export function OnboardingForm({ role, mode = "new" }: Props) {
             },
           ],
         });
+        pickerHref = "/onboarding/events?child=0";
       }
     } else {
       saveProfile({
@@ -108,7 +116,7 @@ export function OnboardingForm({ role, mode = "new" }: Props) {
       });
     }
 
-    router.replace("/schedule");
+    router.replace(pickerHref);
   }
 
   return (

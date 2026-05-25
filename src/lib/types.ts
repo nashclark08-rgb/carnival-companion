@@ -86,6 +86,7 @@ export type ChildProfile = {
   ageGroupId: string;
   categoryId: string;
   name?: string;
+  selectedEventIds?: string[];
 };
 
 export type StudentProfile = {
@@ -95,6 +96,7 @@ export type StudentProfile = {
   ageGroupId: string;
   categoryId: string;
   name?: string;
+  selectedEventIds?: string[];
 };
 
 export type ParentProfile = {
