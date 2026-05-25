@@ -16,6 +16,7 @@ import { useEffect, useState } from "react";
 import { getDb } from "./firebase";
 import {
   Announcement,
+  AnnouncementTarget,
   Carnival,
   CarnivalEvent,
   House,
@@ -122,10 +123,12 @@ export async function sendAnnouncement(
   carnivalId: string,
   severity: Severity,
   message: string,
+  target: AnnouncementTarget = { kind: "all" },
 ) {
   await addDoc(announcementsRef(carnivalId), {
     severity,
     message,
+    target,
     createdAt: Date.now(),
     createdAtServer: serverTimestamp(),
   });

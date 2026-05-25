@@ -47,6 +47,17 @@ export default function SchedulePage() {
     );
   }, [events, profile]);
 
+  const visibleAnnouncements = useMemo(() => {
+    if (!profile) return announcements;
+    return announcements.filter((a) => {
+      if (!a.target || a.target.kind === "all") return true;
+      if (a.target.kind === "house") return a.target.houseId === profile.houseId;
+      if (a.target.kind === "ageGroup")
+        return a.target.ageGroupId === profile.ageGroupId;
+      return true;
+    });
+  }, [announcements, profile]);
+
   const nextEvent = useMemo(
     () => filtered.find((e) => e.scheduledTime + 30 * 60 * 1000 >= now) ?? null,
     [filtered, now],
@@ -66,7 +77,7 @@ export default function SchedulePage() {
 
   return (
     <div className="flex flex-1 flex-col">
-      <AnnouncementBanner items={announcements} />
+      <AnnouncementBanner items={visibleAnnouncements} />
 
       <main className="mx-auto w-full max-w-md flex-1 space-y-6 p-4">
         <header className="flex items-center justify-between">
@@ -96,7 +107,7 @@ export default function SchedulePage() {
           <ScheduleList events={filtered} now={now} />
         </section>
 
-        <AnnouncementHistory items={announcements} />
+        <AnnouncementHistory items={visibleAnnouncements} />
 
         <p className="pt-4 text-center text-xs text-slate-500">
           Staff?{" "}

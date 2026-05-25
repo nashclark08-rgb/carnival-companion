@@ -63,8 +63,11 @@ src/
 │       ├── setup/page.tsx       # Carnival + houses + age groups + categories + sessions
 │       ├── events/page.tsx      # Event editor
 │       ├── leaderboard/page.tsx # House points editor
-│       ├── announcements/page.tsx # Compose + history (Urgent has confirm dialog)
+│       ├── announcements/page.tsx # Compose + history (Urgent has confirm dialog, supports targeting)
+│       ├── import/page.tsx      # AI program import (PDF/image → Claude → review → save)
 │       └── qr/page.tsx          # QR code for the deployed URL
+├── app/api/
+│   └── parse-program/route.ts   # Server route that calls the Anthropic API
 ├── components/                  # AnnouncementBanner, CountdownPin, Leaderboard, etc.
 └── lib/                         # Firebase init, types, db hooks, auth, attendee storage
 ```
@@ -73,9 +76,21 @@ src/
 
 1. Visit `/admin/login` and sign in with the email/password you created in Firebase.
 2. Go to **Setup**: enter carnival name, school, venue, date. Add houses (name + colour), age groups, categories, and sessions. Save.
-3. Go to **Events**: add each event with name, type, age group, category, session, start time, location.
+3. Add events either way:
+   - **Manually** via the Events tab, OR
+   - **AI import**: Import tab → upload PDF/image of the existing program → Claude parses it → review and edit the extracted events → Save.
 4. Go to **QR code**: download/print the QR. Display it at the carnival entry.
-5. On the day: use **Leaderboard** to update points and **Announcements** to broadcast.
+5. On the day: use **Leaderboard** to update points and **Announcements** to broadcast (target everyone, a single house, or a single age group).
+
+## AI program import
+
+The Import tab uses the Anthropic API (Claude Sonnet 4.6) to read a program file and extract structured events.
+
+- **Set the key:** add `ANTHROPIC_API_KEY=sk-ant-...` to `.env.local`. **This is server-only — never prefix it with `NEXT_PUBLIC_`** or it will leak into every browser bundle.
+- Get a key at https://console.anthropic.com/settings/keys. You'll need a few dollars of credit on the account.
+- Supported file types: PDF, PNG, JPEG, WebP. CSV/Excel not yet supported — convert to PDF first.
+- The review step (FR-29 in the PRD) is mandatory — nothing is written to Firestore until you click Save.
+- When deploying to Vercel, add `ANTHROPIC_API_KEY` in the Vercel project's env settings (Environment Variables → Production / Preview / Development).
 
 ## Deploy to Vercel
 
@@ -85,10 +100,9 @@ vercel
 
 Set the same `NEXT_PUBLIC_FIREBASE_*` env vars in the Vercel project settings. The QR code page reads the deployed origin at runtime, so the QR will point at whichever URL you deploy to.
 
-## Known limitations (v1 MVP)
+## Known limitations
 
-- Announcements broadcast to **all** attendees. Scoped targeting (per house / age group) is Phase 2.
-- Push notifications are not yet wired up — the in-app banner is the primary alert channel (per PRD §6.1). Add-to-Home-Screen is supported via the manifest.
-- AI program import is Phase 2.
+- Push notifications are not yet wired up — the in-app banner is the primary alert channel (per PRD §6.1). Add-to-Home-Screen is supported via the manifest. Web push is the only remaining Phase 2 item.
 - Countdown timer trusts the device clock; severe clock drift on attendee devices could mis-display countdowns.
 - Single carnival assumed (`default` doc id). Multi-carnival support is out of scope for v1.
+- AI import only accepts PDF and image files. CSV/Excel programs need to be exported to PDF first.

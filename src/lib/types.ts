@@ -51,11 +51,17 @@ export type CarnivalEvent = {
 
 export type Severity = "notice" | "reminder" | "urgent";
 
+export type AnnouncementTarget =
+  | { kind: "all" }
+  | { kind: "house"; houseId: string }
+  | { kind: "ageGroup"; ageGroupId: string };
+
 export type Announcement = {
   id: string;
   severity: Severity;
   message: string;
   createdAt: number;
+  target?: AnnouncementTarget;
 };
 
 export type AttendeeProfile = {
