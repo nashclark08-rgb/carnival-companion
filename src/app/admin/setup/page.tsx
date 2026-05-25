@@ -11,6 +11,7 @@ import {
   Session,
 } from "@/lib/types";
 import { resizeImageToDataUrl } from "@/lib/image";
+import { SetupQuickstart } from "@/components/SetupQuickstart";
 
 function uid() {
   return Math.random().toString(36).slice(2, 10);
@@ -67,6 +68,8 @@ export default function AdminSetupPage() {
           save.
         </p>
       </header>
+
+      <SetupQuickstart draft={draft} onApplyDraft={setDraft} />
 
       <Section title="Carnival">
         <div className="grid gap-4 sm:grid-cols-2">
