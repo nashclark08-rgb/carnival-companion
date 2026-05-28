@@ -39,6 +39,7 @@ export type ServerCarnival = {
   name?: string;
   schoolName?: string;
   branding?: Branding;
+  mapDataUrl?: string;
 };
 
 export async function fetchCarnivalForManifest(): Promise<ServerCarnival | null> {
@@ -63,6 +64,10 @@ export async function fetchCarnivalForManifest(): Promise<ServerCarnival | null>
           ? decoded.schoolName
           : undefined,
       branding: decoded.branding as Branding | undefined,
+      mapDataUrl:
+        typeof decoded.mapDataUrl === "string"
+          ? decoded.mapDataUrl
+          : undefined,
     };
   } catch {
     return null;

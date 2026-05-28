@@ -216,6 +216,62 @@ export default function AdminSetupPage() {
         </div>
       </Section>
 
+      <Section title="Venue map">
+        <p className="text-sm text-slate-500">
+          Upload a PDF of the venue map. Attendees get a &quot;View venue
+          map&quot; link on their schedule. Keep the file under ~600&nbsp;KB so
+          it fits inside the carnival document.
+        </p>
+        <div className="flex flex-wrap items-center gap-3">
+          <input
+            type="file"
+            accept="application/pdf,.pdf"
+            onChange={async (e) => {
+              const file = e.target.files?.[0];
+              if (!file) return;
+              if (file.size > 700 * 1024) {
+                alert(
+                  `That PDF is ${(file.size / 1024).toFixed(0)} KB. Please use one under 600 KB — bigger files won't fit in Firestore.`,
+                );
+                e.target.value = "";
+                return;
+              }
+              const reader = new FileReader();
+              reader.onload = () => {
+                const dataUrl = reader.result;
+                if (typeof dataUrl === "string") {
+                  setDraft({ ...draft, mapDataUrl: dataUrl });
+                }
+              };
+              reader.readAsDataURL(file);
+            }}
+            className="text-xs"
+          />
+          {draft.mapDataUrl && (
+            <>
+              <a
+                href={draft.mapDataUrl}
+                target="_blank"
+                rel="noopener noreferrer"
+                className="text-xs text-indigo-600 underline"
+              >
+                Preview current map
+              </a>
+              <span className="text-xs text-slate-500">
+                ~{Math.round((draft.mapDataUrl.length * 0.75) / 1024)} KB stored
+              </span>
+              <button
+                type="button"
+                onClick={() => setDraft({ ...draft, mapDataUrl: undefined })}
+                className="text-xs text-slate-500 underline hover:text-red-700"
+              >
+                Remove
+              </button>
+            </>
+          )}
+        </div>
+      </Section>
+
       <Section title="Houses">
         <ListEditor<House>
           items={draft.houses}

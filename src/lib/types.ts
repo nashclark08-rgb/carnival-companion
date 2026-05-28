@@ -43,6 +43,7 @@ export type Carnival = {
   categories: Category[];
   sessions: Session[];
   branding?: Branding;
+  mapDataUrl?: string;
   pointsUpdatedAt?: number;
 };
 

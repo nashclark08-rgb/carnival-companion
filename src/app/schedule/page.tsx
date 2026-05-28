@@ -213,6 +213,24 @@ export default function SchedulePage() {
           secondaryColor={carnival.branding?.secondaryColor}
         />
 
+        {carnival.mapDataUrl && (
+          <a
+            href="/api/map"
+            target="_blank"
+            rel="noopener noreferrer"
+            className="block rounded-xl border-2 p-3 text-center text-sm font-semibold"
+            style={{
+              borderColor:
+                carnival.branding?.secondaryColor ?? "#7c3aed",
+              color:
+                carnival.branding?.primaryColor ?? "#4f46e5",
+              background: "rgba(255,255,255,0.6)",
+            }}
+          >
+            View venue map (PDF)
+          </a>
+        )}
+
         <NotificationOptIn
           announcements={visibleAnnouncements}
           primaryColor={carnival.branding?.primaryColor}
